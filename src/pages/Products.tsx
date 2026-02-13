@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Search, ImagePlus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ImagePlus, Upload, Download } from 'lucide-react';
 import { Product } from '@/types';
 import { useProducts } from '@/contexts/ProductsContext';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,76 @@ export default function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const downloadTemplate = () => {
+    const header = 'codigo;nome;descricao;preco_custo;preco_venda;preco_convencao;unidade';
+    const example = 'PROD001;Luminária LED 20W;Luminária de alta eficiência;45.90;89.90;79.90;PC';
+    const csv = `${header}\n${example}`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modelo_produtos.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(l => l.trim());
+      
+      if (lines.length < 2) {
+        toast({ title: 'Erro', description: 'O arquivo está vazio ou só contém o cabeçalho.', variant: 'destructive' });
+        return;
+      }
+
+      let imported = 0;
+      let errors = 0;
+
+      // Skip header line
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(';').map(c => c.trim());
+        if (cols.length < 5) { errors++; continue; }
+
+        const [code, name, description, costPriceStr, salePriceStr, conventionPriceStr, unit] = cols;
+        const costPrice = parseFloat(costPriceStr?.replace(',', '.') || '0');
+        const salePrice = parseFloat(salePriceStr?.replace(',', '.') || '0');
+        const conventionPrice = parseFloat(conventionPriceStr?.replace(',', '.') || '0');
+
+        if (!code || !name || isNaN(costPrice) || isNaN(salePrice)) {
+          errors++;
+          continue;
+        }
+
+        addProduct({
+          code,
+          name,
+          description: description || '',
+          costPrice,
+          salePrice,
+          conventionPrice: isNaN(conventionPrice) ? 0 : conventionPrice,
+          unit: unit || 'PC',
+          active: true,
+          imageUrl: '',
+        });
+        imported++;
+      }
+
+      toast({
+        title: `Importação concluída!`,
+        description: `${imported} produto(s) importado(s)${errors > 0 ? `, ${errors} linha(s) com erro` : ''}.`,
+      });
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be re-imported
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -59,10 +129,24 @@ export default function Products() {
       title="Produtos"
       subtitle={`${products.length} produtos cadastrados`}
       actions={
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Novo Produto</Button>
-          </DialogTrigger>
+        <div className="flex gap-2 flex-wrap">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleImportCSV}
+          />
+          <Button variant="outline" onClick={downloadTemplate}>
+            <Download className="w-4 h-4 mr-2" /> Modelo CSV
+          </Button>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="w-4 h-4 mr-2" /> Importar CSV
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Novo Produto</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
@@ -127,6 +211,7 @@ export default function Products() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       }
     >
       <Card className="p-6">
