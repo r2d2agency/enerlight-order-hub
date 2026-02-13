@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Eye, Trash2, FileText, X } from 'lucide-react';
+import { Plus, Eye, Trash2, FileText, X, Download } from 'lucide-react';
 import { Order, OrderItem, Product } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
 import { useProducts } from '@/contexts/ProductsContext';
@@ -29,6 +29,29 @@ export default function Orders() {
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<Order | null>(null);
   const { toast } = useToast();
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const handleDownloadPdf = useCallback(async (order: Order) => {
+    setGeneratingPdf(true);
+    try {
+      const el = document.getElementById('order-print');
+      if (!el) return;
+      const html2canvas = (await import('html2canvas-pro')).default;
+      const { jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`proposta-${order.number}.pdf`);
+      toast({ title: 'PDF gerado com sucesso!' });
+    } catch {
+      toast({ title: 'Erro ao gerar PDF', variant: 'destructive' });
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }, [toast]);
 
   const sellers = users.filter(u => u.role === 'vendedor' && u.active);
 
@@ -336,8 +359,13 @@ export default function Orders() {
       {/* View order dialog */}
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="font-display">Proposta Comercial</DialogTitle>
+            {viewing && (
+              <Button size="sm" onClick={() => handleDownloadPdf(viewing)} disabled={generatingPdf}>
+                <Download className="w-4 h-4 mr-2" /> {generatingPdf ? 'Gerando...' : 'Salvar PDF'}
+              </Button>
+            )}
           </DialogHeader>
           {viewing && <OrderPrint order={viewing} />}
         </DialogContent>
