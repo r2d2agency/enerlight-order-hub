@@ -2,6 +2,10 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User } from '@/types';
 import { userService } from '@/services';
 
+const STORAGE_KEY = 'enerlight-users';
+
+const DEFAULT_ADMIN: User = { id: '1', name: 'Admin Enerlight', email: 'admin@enerlight.com.br', role: 'admin', active: true };
+
 interface UsersContextType {
   users: User[];
   addUser: (data: Omit<User, 'id'> & { password: string }) => void;
@@ -18,16 +22,34 @@ const UsersContext = createContext<UsersContextType>({
   loading: true,
 });
 
+function loadFromStorage(): User[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    const parsed = data ? JSON.parse(data) : [];
+    // Ensure admin always exists
+    if (!parsed.find((u: User) => u.email === 'admin@enerlight.com.br')) {
+      parsed.unshift(DEFAULT_ADMIN);
+    }
+    return parsed;
+  } catch { return [DEFAULT_ADMIN]; }
+}
+
+function saveToStorage(users: User[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+}
+
 export function UsersProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>(loadFromStorage);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     userService.list()
-      .then(data => setUsers(data))
-      .catch(() => { /* API unavailable, keep empty */ })
+      .then(data => { setUsers(data); saveToStorage(data); })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { saveToStorage(users); }, [users]);
 
   const addUser = async (data: Omit<User, 'id'> & { password: string }) => {
     try {
@@ -39,21 +61,13 @@ export function UsersProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUser = async (id: string, data: Partial<User> & { password?: string }) => {
-    try {
-      await userService.update(id, data);
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
-    } catch {
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
-    }
+    try { await userService.update(id, data); } catch {}
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
   };
 
   const deleteUser = async (id: string) => {
-    try {
-      await userService.delete(id);
-      setUsers(prev => prev.filter(u => u.id !== id));
-    } catch {
-      setUsers(prev => prev.filter(u => u.id !== id));
-    }
+    try { await userService.delete(id); } catch {}
+    setUsers(prev => prev.filter(u => u.id !== id));
   };
 
   return (
