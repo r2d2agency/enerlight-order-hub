@@ -91,4 +91,35 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/auth/change-password
+router.put('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Senha atual e nova senha são obrigatórias' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'A nova senha deve ter no mínimo 6 caracteres' });
+    }
+
+    const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
+    if (!valid) {
+      return res.status(401).json({ message: 'Senha atual incorreta' });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [hash, req.user.id]);
+
+    res.json({ message: 'Senha alterada com sucesso' });
+  } catch (err) {
+    console.error('Erro ao alterar senha:', err);
+    res.status(500).json({ message: 'Erro interno' });
+  }
+});
+
 module.exports = router;
