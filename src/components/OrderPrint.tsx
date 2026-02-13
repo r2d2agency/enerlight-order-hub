@@ -56,6 +56,7 @@ export default function OrderPrint({ order }: OrderPrintProps) {
             <th className="text-left py-2 text-muted-foreground font-medium">Descrição</th>
             <th className="text-center py-2 text-muted-foreground font-medium">Un.</th>
             <th className="text-center py-2 text-muted-foreground font-medium">Qtd.</th>
+            <th className="text-right py-2 text-muted-foreground font-medium">Convenção</th>
             <th className="text-right py-2 text-muted-foreground font-medium">Preço</th>
             <th className="text-right py-2 text-muted-foreground font-medium">Desc.</th>
             <th className="text-right py-2 text-muted-foreground font-medium">Total</th>
@@ -69,6 +70,7 @@ export default function OrderPrint({ order }: OrderPrintProps) {
               <td className="py-2">{item.product.name}</td>
               <td className="py-2 text-center">{item.product.unit}</td>
               <td className="py-2 text-center">{item.quantity.toFixed(2).replace('.', ',')}</td>
+              <td className="py-2 text-right text-muted-foreground">{formatCurrency(item.product.conventionPrice)}</td>
               <td className="py-2 text-right">{formatCurrency(item.unitPrice)}</td>
               <td className="py-2 text-right">{formatCurrency(item.discount)}</td>
               <td className="py-2 text-right font-semibold">{formatCurrency(item.total)}</td>
