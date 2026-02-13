@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,39 +9,70 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { User } from '@/types';
-import { mockUsers } from '@/data/mockData';
+import { userService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const { toast } = useToast();
 
-  const emptyUser = { name: '', email: '', role: 'vendedor' as const, active: true };
-  const [form, setForm] = useState<Omit<User, 'id'>>(emptyUser);
+  const emptyForm: { name: string; email: string; role: 'admin' | 'vendedor'; active: boolean; password: string } = { name: '', email: '', role: 'vendedor', active: true, password: '' };
+  const [form, setForm] = useState(emptyForm);
 
-  const openNew = () => { setEditing(null); setForm(emptyUser); setDialogOpen(true); };
-  const openEdit = (u: User) => { setEditing(u); setForm(u); setDialogOpen(true); };
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await userService.list();
+      setUsers(data);
+    } catch {
+      toast({ title: 'Erro ao carregar usuários', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSave = () => {
+  useEffect(() => { fetchUsers(); }, []);
+
+  const openNew = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
+  const openEdit = (u: User) => { setEditing(u); setForm({ ...u, password: '' }); setDialogOpen(true); };
+
+  const handleSave = async () => {
     if (!form.name || !form.email) {
       toast({ title: 'Erro', description: 'Nome e email são obrigatórios.', variant: 'destructive' });
       return;
     }
-    if (editing) {
-      setUsers(prev => prev.map(u => u.id === editing.id ? { ...form, id: editing.id } : u));
-      toast({ title: 'Usuário atualizado!' });
-    } else {
-      setUsers(prev => [...prev, { ...form, id: crypto.randomUUID() }]);
-      toast({ title: 'Usuário cadastrado!' });
+    if (!editing && !form.password) {
+      toast({ title: 'Erro', description: 'Senha é obrigatória para novo usuário.', variant: 'destructive' });
+      return;
     }
-    setDialogOpen(false);
+    try {
+      if (editing) {
+        const updateData: Record<string, unknown> = { name: form.name, email: form.email, role: form.role, active: form.active };
+        if (form.password) updateData.password = form.password;
+        await userService.update(editing.id, updateData as Partial<User>);
+        toast({ title: 'Usuário atualizado!' });
+      } else {
+        await userService.create({ name: form.name, email: form.email, role: form.role, active: form.active, password: form.password });
+        toast({ title: 'Usuário cadastrado!' });
+      }
+      setDialogOpen(false);
+      fetchUsers();
+    } catch {
+      toast({ title: 'Erro ao salvar usuário', variant: 'destructive' });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setUsers(prev => prev.filter(u => u.id !== id));
-    toast({ title: 'Usuário removido.' });
+  const handleDelete = async (id: string) => {
+    try {
+      await userService.delete(id);
+      toast({ title: 'Usuário removido.' });
+      fetchUsers();
+    } catch {
+      toast({ title: 'Erro ao remover usuário', variant: 'destructive' });
+    }
   };
 
   return (
@@ -65,6 +96,10 @@ export default function UsersPage() {
               <div>
                 <Label>Email</Label>
                 <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div>
+                <Label>{editing ? 'Nova Senha (deixe vazio para manter)' : 'Senha'}</Label>
+                <Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder={editing ? '••••••••' : 'Digite a senha'} />
               </div>
               <div>
                 <Label>Perfil</Label>
