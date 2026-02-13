@@ -1,7 +1,8 @@
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBranding } from '@/contexts/BrandingContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -14,8 +15,14 @@ const navItems = [
 
 export default function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { branding } = useBranding();
+  const { user, logout } = useAuth();
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-secondary text-secondary-foreground flex flex-col">
       <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
@@ -57,12 +64,15 @@ export default function AppSidebar() {
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-accent-foreground">
-            AD
+            {user?.name?.substring(0, 2).toUpperCase() || 'US'}
           </div>
-          <div className="text-sm">
-            <p className="font-medium text-sidebar-accent-foreground">Admin</p>
-            <p className="text-xs text-sidebar-foreground opacity-60">admin@enerlight.com.br</p>
+          <div className="text-sm flex-1 min-w-0">
+            <p className="font-medium text-sidebar-accent-foreground truncate">{user?.name || 'Usuário'}</p>
+            <p className="text-xs text-sidebar-foreground opacity-60 truncate">{user?.email || ''}</p>
           </div>
+          <button onClick={handleLogout} className="text-sidebar-foreground hover:text-destructive transition-colors" title="Sair">
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>
