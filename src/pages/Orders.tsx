@@ -9,14 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Eye, Trash2, FileText, X } from 'lucide-react';
-import { Order, OrderItem, Client } from '@/types';
-import { mockOrders, mockProducts, mockClients } from '@/data/mockData';
+import { Order, OrderItem } from '@/types';
+import { mockOrders, mockProducts } from '@/data/mockData';
+import { useClients } from '@/contexts/ClientsContext';
 import { useToast } from '@/hooks/use-toast';
 import OrderPrint from '@/components/OrderPrint';
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
-  const [clients] = useState<Client[]>(mockClients);
+  const { clients } = useClients();
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<Order | null>(null);
   const { toast } = useToast();

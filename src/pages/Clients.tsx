@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Client } from '@/types';
-import { mockClients } from '@/data/mockData';
+import { useClients } from '@/contexts/ClientsContext';
+import { maskCNPJ, maskPhone } from '@/lib/masks';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Clients() {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const { clients, addClient, updateClient, deleteClient } = useClients();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const { toast } = useToast();
@@ -31,17 +32,17 @@ export default function Clients() {
       return;
     }
     if (editing) {
-      setClients(prev => prev.map(c => c.id === editing.id ? { ...form, id: editing.id } : c));
+      updateClient(editing.id, form);
       toast({ title: 'Cliente atualizado!' });
     } else {
-      setClients(prev => [...prev, { ...form, id: crypto.randomUUID() }]);
+      addClient(form);
       toast({ title: 'Cliente cadastrado!' });
     }
     setDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
-    setClients(prev => prev.filter(c => c.id !== id));
+    deleteClient(id);
     toast({ title: 'Cliente removido.' });
   };
 
@@ -54,28 +55,38 @@ export default function Clients() {
           <DialogTrigger asChild>
             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Novo Cliente</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Razão Social / Nome</Label>
                 <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
                 <Label>CNPJ</Label>
-                <Input value={form.cnpj} onChange={e => setForm({ ...form, cnpj: e.target.value })} />
+                <Input
+                  value={form.cnpj}
+                  onChange={e => setForm({ ...form, cnpj: maskCNPJ(e.target.value) })}
+                  placeholder="00.000.000/0000-00"
+                  maxLength={18}
+                />
               </div>
               <div>
                 <Label>Telefone</Label>
-                <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                <Input
+                  value={form.phone}
+                  onChange={e => setForm({ ...form, phone: maskPhone(e.target.value) })}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
+                />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Email</Label>
-                <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="exemplo@email.com" />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Endereço</Label>
                 <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
               </div>
@@ -89,7 +100,7 @@ export default function Clients() {
               </div>
               <div>
                 <Label>Estado</Label>
-                <Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
+                <Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} maxLength={2} placeholder="SP" />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
