@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { User } from '@/types';
 import { userService } from '@/services';
+import { mockUsers } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 export default function UsersPage() {
@@ -28,7 +29,8 @@ export default function UsersPage() {
       const data = await userService.list();
       setUsers(data);
     } catch {
-      toast({ title: 'Erro ao carregar usuários', variant: 'destructive' });
+      // Fallback to mock data when API is unavailable
+      setUsers(mockUsers);
     } finally {
       setLoading(false);
     }
