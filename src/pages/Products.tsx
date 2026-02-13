@@ -90,18 +90,18 @@ export default function Products() {
           <DialogTrigger asChild>
             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Novo Produto</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               {/* Image upload */}
-              <div className="col-span-2 flex items-center gap-4">
-                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 shrink-0">
+              <div className="col-span-1 sm:col-span-2 flex items-center gap-4">
+                <div className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 shrink-0">
                   {form.imageUrl ? (
                     <img src={form.imageUrl} alt="Produto" className="w-full h-full object-cover" />
                   ) : (
-                    <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                    <ImagePlus className="w-6 h-6 text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex-1">
@@ -118,7 +118,6 @@ export default function Products() {
                       }
                     }}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG ou WEBP</p>
                 </div>
               </div>
               <div>
@@ -129,13 +128,13 @@ export default function Products() {
                 <Label>Unidade</Label>
                 <Input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Nome</Label>
                 <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <Label>Descrição</Label>
-                <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} />
+                <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} />
               </div>
               <div>
                 <Label>Preço de Custo (R$)</Label>
@@ -150,7 +149,7 @@ export default function Products() {
                 <Input type="number" step="0.01" value={form.conventionPrice} onChange={e => setForm({ ...form, conventionPrice: +e.target.value })} />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3 mt-4">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleSave}>Salvar</Button>
             </div>
