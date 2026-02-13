@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Eye, Trash2, FileText, X } from 'lucide-react';
 import { Order, OrderItem } from '@/types';
-import { mockOrders, mockProducts } from '@/data/mockData';
+import { mockOrders, mockProducts, mockUsers } from '@/data/mockData';
 import { useClients } from '@/contexts/ClientsContext';
 import { useToast } from '@/hooks/use-toast';
 import OrderPrint from '@/components/OrderPrint';
@@ -187,7 +187,14 @@ export default function Orders() {
               </div>
               <div>
                 <Label>Vendedor</Label>
-                <Input value={seller} onChange={e => setSeller(e.target.value)} />
+                <Select value={seller} onValueChange={setSeller}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                  <SelectContent>
+                    {mockUsers.filter(u => u.role === 'vendedor' && u.active).map(u => (
+                      <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Validade (dias)</Label>
