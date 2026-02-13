@@ -272,7 +272,7 @@ export default function Orders() {
                           <Select value={item.product.id} onValueChange={v => updateItem(item.id, 'productId', v)}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({p.costPrice.toFixed(2).replace('.', ',')})</SelectItem>)}
+                              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </TableCell>
