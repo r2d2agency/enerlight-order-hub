@@ -21,26 +21,33 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const cached = localStorage.getItem('enerlight-user');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { /* ignore */ }
+    }
+    return null;
+  });
   const [token, setToken] = useState<string | null>(localStorage.getItem('enerlight-token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only check on initial mount, not after login
     if (token) {
       authService.me()
-        .then(u => { setUser(u); setLoading(false); })
+        .then(u => {
+          setUser(u);
+          localStorage.setItem('enerlight-user', JSON.stringify(u));
+        })
         .catch(() => {
-          // API not available yet — use cached user
-          const cached = localStorage.getItem('enerlight-user');
-          if (cached) {
-            try { setUser(JSON.parse(cached)); } catch { /* ignore */ }
-          }
-          setLoading(false);
-        });
+          // API not available — keep cached user (already loaded in state init)
+        })
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   const login = async (email: string, password: string) => {
     try {
