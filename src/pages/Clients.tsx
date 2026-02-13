@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
 import { Client } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
 import { maskCNPJ, maskPhone } from '@/lib/masks';
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Clients() {
   const { clients, addClient, updateClient, deleteClient } = useClients();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const { toast } = useToast();
@@ -131,6 +133,7 @@ export default function Clients() {
                 <TableCell>{c.phone}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" title="Novo Pedido" onClick={() => navigate(`/pedidos?clientId=${c.id}`)}><FileText className="w-4 h-4 text-primary" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>

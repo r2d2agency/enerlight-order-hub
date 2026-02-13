@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import OrderPrint from '@/components/OrderPrint';
 
 export default function Orders() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const { clients } = useClients();
   const [creating, setCreating] = useState(false);
@@ -116,6 +118,20 @@ export default function Orders() {
     setDeliveryDeadline('');
     setSeller('');
   };
+  // Auto-open order form when coming from clients page
+  useEffect(() => {
+    const clientId = searchParams.get('clientId');
+    if (clientId && clients.find(c => c.id === clientId)) {
+      resetForm();
+      setSelectedClientId(clientId);
+      // Pre-select first active seller
+      const activeSeller = mockUsers.find(u => u.role === 'vendedor' && u.active);
+      if (activeSeller) setSeller(activeSeller.name);
+      // Clean URL
+      setSearchParams({}, { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const statusColors: Record<string, string> = {
     rascunho: 'bg-muted text-muted-foreground',
