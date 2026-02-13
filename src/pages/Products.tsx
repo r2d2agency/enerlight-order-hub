@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,13 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, Search, ImagePlus } from 'lucide-react';
 import { Product } from '@/types';
-import { productService } from '@/services';
-import { mockProducts } from '@/data/mockData';
+import { useProducts } from '@/contexts/ProductsContext';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -33,62 +31,27 @@ export default function Products() {
 
   const [form, setForm] = useState<Omit<Product, 'id'>>(emptyProduct);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const data = await productService.list();
-      setProducts(data);
-    } catch {
-      // Fallback to mock data when API is unavailable
-      setProducts(mockProducts);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchProducts(); }, []);
-
   const openNew = () => { setEditing(null); setForm(emptyProduct); setDialogOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setForm(p); setDialogOpen(true); };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!form.code || !form.name) {
       toast({ title: 'Erro', description: 'Código e nome são obrigatórios.', variant: 'destructive' });
       return;
     }
-    try {
-      if (editing) {
-        await productService.update(editing.id, form);
-        toast({ title: 'Produto atualizado!' });
-      } else {
-        await productService.create(form);
-        toast({ title: 'Produto cadastrado!' });
-      }
-      setDialogOpen(false);
-      fetchProducts();
-    } catch {
-      // Fallback: operate locally when API is unavailable
-      if (editing) {
-        setProducts(prev => prev.map(p => p.id === editing.id ? { ...form, id: editing.id } : p));
-        toast({ title: 'Produto atualizado!' });
-      } else {
-        setProducts(prev => [...prev, { ...form, id: crypto.randomUUID() }]);
-        toast({ title: 'Produto cadastrado!' });
-      }
-      setDialogOpen(false);
+    if (editing) {
+      updateProduct(editing.id, form);
+      toast({ title: 'Produto atualizado!' });
+    } else {
+      addProduct(form);
+      toast({ title: 'Produto cadastrado!' });
     }
+    setDialogOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await productService.delete(id);
-      toast({ title: 'Produto removido.' });
-      fetchProducts();
-    } catch {
-      // Fallback: operate locally
-      setProducts(prev => prev.filter(p => p.id !== id));
-      toast({ title: 'Produto removido.' });
-    }
+  const handleDelete = (id: string) => {
+    deleteProduct(id);
+    toast({ title: 'Produto removido.' });
   };
 
   return (
@@ -100,12 +63,11 @@ export default function Products() {
           <DialogTrigger asChild>
             <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Novo Produto</Button>
           </DialogTrigger>
-           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              {/* Image upload */}
               <div className="col-span-1 sm:col-span-2 flex items-center gap-4">
                 <div className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 shrink-0">
                   {form.imageUrl ? (
@@ -180,45 +142,49 @@ export default function Products() {
           </div>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-14">Foto</TableHead>
-              <TableHead className="w-20">Código</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead className="text-right">Custo</TableHead>
-              <TableHead className="text-right">Venda</TableHead>
-              <TableHead className="text-right">Convenção</TableHead>
-              <TableHead className="w-24">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.name} className="w-10 h-10 rounded object-cover" />
-                  ) : (
-                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                      <ImagePlus className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="font-mono text-sm">{p.code}</TableCell>
-                <TableCell className="font-medium">{p.name}</TableCell>
-                <TableCell className="text-right">R$ {p.costPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell className="text-right font-semibold">R$ {p.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell className="text-right">R$ {p.conventionPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                  </div>
-                </TableCell>
+        {products.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">Nenhum produto cadastrado. Clique em "Novo Produto" para começar.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-14">Foto</TableHead>
+                <TableHead className="w-20">Código</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead className="text-right">Custo</TableHead>
+                <TableHead className="text-right">Venda</TableHead>
+                <TableHead className="text-right">Convenção</TableHead>
+                <TableHead className="w-24">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.name} className="w-10 h-10 rounded object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                        <ImagePlus className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">{p.code}</TableCell>
+                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell className="text-right">R$ {p.costPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right font-semibold">R$ {p.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right">R$ {p.conventionPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </AdminLayout>
   );

@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { ClientsProvider } from "@/contexts/ClientsContext";
+import { ProductsProvider } from "@/contexts/ProductsContext";
+import { UsersProvider } from "@/contexts/UsersContext";
+import { OrdersProvider } from "@/contexts/OrdersContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -22,24 +25,30 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <BrandingProvider>
-        <ClientsProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-              <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-              <Route path="/clientes" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-              <Route path="/usuarios" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
-              <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <ClientsProvider>
+          <ProductsProvider>
+          <UsersProvider>
+          <OrdersProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+                <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                <Route path="/clientes" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+                <Route path="/usuarios" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+                <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </OrdersProvider>
+          </UsersProvider>
+          </ProductsProvider>
+          </ClientsProvider>
         </AuthProvider>
-        </ClientsProvider>
       </BrandingProvider>
     </TooltipProvider>
   </QueryClientProvider>

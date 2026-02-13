@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,40 +8,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { User } from '@/types';
-import { userService } from '@/services';
-import { mockUsers } from '@/data/mockData';
+import { useUsers } from '@/contexts/UsersContext';
 import { useToast } from '@/hooks/use-toast';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { users, addUser, updateUser, deleteUser } = useUsers();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<User | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string; email: string; role: 'admin' | 'vendedor'; active: boolean } | null>(null);
   const { toast } = useToast();
 
   const emptyForm: { name: string; email: string; role: 'admin' | 'vendedor'; active: boolean; password: string } = { name: '', email: '', role: 'vendedor', active: true, password: '' };
   const [form, setForm] = useState(emptyForm);
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await userService.list();
-      setUsers(data);
-    } catch {
-      // Fallback to mock data when API is unavailable
-      setUsers(mockUsers);
-    } finally {
-      setLoading(false);
-    }
+  const openNew = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
+  const openEdit = (u: { id: string; name: string; email: string; role: 'admin' | 'vendedor'; active: boolean }) => {
+    setEditing(u);
+    setForm({ ...u, password: '' });
+    setDialogOpen(true);
   };
 
-  useEffect(() => { fetchUsers(); }, []);
-
-  const openNew = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
-  const openEdit = (u: User) => { setEditing(u); setForm({ ...u, password: '' }); setDialogOpen(true); };
-
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!form.name || !form.email) {
       toast({ title: 'Erro', description: 'Nome e email são obrigatórios.', variant: 'destructive' });
       return;
@@ -50,41 +36,21 @@ export default function UsersPage() {
       toast({ title: 'Erro', description: 'Senha é obrigatória para novo usuário.', variant: 'destructive' });
       return;
     }
-    try {
-      if (editing) {
-        const updateData: Record<string, unknown> = { name: form.name, email: form.email, role: form.role, active: form.active };
-        if (form.password) updateData.password = form.password;
-        await userService.update(editing.id, updateData as Partial<User>);
-        toast({ title: 'Usuário atualizado!' });
-      } else {
-        await userService.create({ name: form.name, email: form.email, role: form.role, active: form.active, password: form.password });
-        toast({ title: 'Usuário cadastrado!' });
-      }
-      setDialogOpen(false);
-      fetchUsers();
-    } catch {
-      // Fallback: operate locally when API is unavailable
-      if (editing) {
-        setUsers(prev => prev.map(u => u.id === editing.id ? { ...u, name: form.name, email: form.email, role: form.role, active: form.active } : u));
-        toast({ title: 'Usuário atualizado!' });
-      } else {
-        setUsers(prev => [...prev, { id: crypto.randomUUID(), name: form.name, email: form.email, role: form.role, active: form.active }]);
-        toast({ title: 'Usuário cadastrado!' });
-      }
-      setDialogOpen(false);
+    if (editing) {
+      const updateData: Record<string, unknown> = { name: form.name, email: form.email, role: form.role, active: form.active };
+      if (form.password) updateData.password = form.password;
+      updateUser(editing.id, updateData as any);
+      toast({ title: 'Usuário atualizado!' });
+    } else {
+      addUser({ name: form.name, email: form.email, role: form.role, active: form.active, password: form.password });
+      toast({ title: 'Usuário cadastrado!' });
     }
+    setDialogOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await userService.delete(id);
-      toast({ title: 'Usuário removido.' });
-      fetchUsers();
-    } catch {
-      // Fallback: operate locally
-      setUsers(prev => prev.filter(u => u.id !== id));
-      toast({ title: 'Usuário removido.' });
-    }
+  const handleDelete = (id: string) => {
+    deleteUser(id);
+    toast({ title: 'Usuário removido.' });
   };
 
   return (
@@ -111,7 +77,7 @@ export default function UsersPage() {
               </div>
               <div>
                 <Label>{editing ? 'Nova Senha (deixe vazio para manter)' : 'Senha'}</Label>
-                <Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder={editing ? '••••••••' : 'Digite a senha'} />
+                <Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder={editing ? '••••••••' : 'Digite a senha'} autoComplete="new-password" />
               </div>
               <div>
                 <Label>Perfil</Label>
@@ -133,41 +99,45 @@ export default function UsersPage() {
       }
     >
       <Card className="p-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Perfil</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-24">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell className="font-medium">{u.name}</TableCell>
-                <TableCell>{u.email}</TableCell>
-                <TableCell>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${u.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                    {u.role === 'admin' ? 'Admin' : 'Vendedor'}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className={`text-xs px-2 py-1 rounded-full ${u.active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-                    {u.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(u)}><Pencil className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(u.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                  </div>
-                </TableCell>
+        {users.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">Nenhum usuário cadastrado. Clique em "Novo Usuário" para começar.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Perfil</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-24">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell className="font-medium">{u.name}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${u.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                      {u.role === 'admin' ? 'Admin' : 'Vendedor'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`text-xs px-2 py-1 rounded-full ${u.active ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                      {u.active ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(u)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(u.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </AdminLayout>
   );

@@ -1,16 +1,22 @@
 import AdminLayout from '@/components/AdminLayout';
 import { Card } from '@/components/ui/card';
 import { Package, FileText, Users, TrendingUp } from 'lucide-react';
-import { mockProducts, mockOrders, mockClients } from '@/data/mockData';
-
-const stats = [
-  { label: 'Produtos Ativos', value: mockProducts.filter(p => p.active).length, icon: Package, color: 'text-primary' },
-  { label: 'Pedidos', value: mockOrders.length, icon: FileText, color: 'text-accent-foreground' },
-  { label: 'Clientes', value: mockClients.length, icon: Users, color: 'text-success' },
-  { label: 'Faturamento', value: `R$ ${mockOrders.reduce((s, o) => s + o.total, 0).toLocaleString('pt-BR')}`, icon: TrendingUp, color: 'text-primary' },
-];
+import { useProducts } from '@/contexts/ProductsContext';
+import { useOrders } from '@/contexts/OrdersContext';
+import { useClients } from '@/contexts/ClientsContext';
 
 export default function Dashboard() {
+  const { products } = useProducts();
+  const { orders } = useOrders();
+  const { clients } = useClients();
+
+  const stats = [
+    { label: 'Produtos Ativos', value: products.filter(p => p.active).length, icon: Package, color: 'text-primary' },
+    { label: 'Pedidos', value: orders.length, icon: FileText, color: 'text-accent-foreground' },
+    { label: 'Clientes', value: clients.length, icon: Users, color: 'text-success' },
+    { label: 'Faturamento', value: `R$ ${orders.reduce((s, o) => s + o.total, 0).toLocaleString('pt-BR')}`, icon: TrendingUp, color: 'text-primary' },
+  ];
+
   return (
     <AdminLayout title="Dashboard" subtitle="Visão geral do sistema">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -33,7 +39,8 @@ export default function Dashboard() {
         <Card className="p-6">
           <h3 className="font-display font-semibold text-lg text-card-foreground mb-4">Últimos Pedidos</h3>
           <div className="space-y-3">
-            {mockOrders.map((order) => (
+            {orders.length === 0 && <p className="text-sm text-muted-foreground">Nenhum pedido cadastrado.</p>}
+            {orders.slice(0, 5).map((order) => (
               <div key={order.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <p className="font-medium text-card-foreground">Proposta #{order.number}</p>
@@ -51,7 +58,8 @@ export default function Dashboard() {
         <Card className="p-6">
           <h3 className="font-display font-semibold text-lg text-card-foreground mb-4">Produtos Mais Vendidos</h3>
           <div className="space-y-3">
-            {mockProducts.slice(0, 5).map((product) => (
+            {products.length === 0 && <p className="text-sm text-muted-foreground">Nenhum produto cadastrado.</p>}
+            {products.slice(0, 5).map((product) => (
               <div key={product.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <p className="font-medium text-card-foreground text-sm">{product.name}</p>

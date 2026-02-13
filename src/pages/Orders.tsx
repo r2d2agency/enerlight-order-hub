@@ -10,19 +10,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Eye, Trash2, FileText, X } from 'lucide-react';
-import { Order, OrderItem } from '@/types';
-import { mockOrders, mockProducts, mockUsers } from '@/data/mockData';
+import { Order, OrderItem, Product } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useUsers } from '@/contexts/UsersContext';
+import { useOrders } from '@/contexts/OrdersContext';
 import { useToast } from '@/hooks/use-toast';
 import OrderPrint from '@/components/OrderPrint';
 
 export default function Orders() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const { orders, addOrder } = useOrders();
   const { clients } = useClients();
+  const { products } = useProducts();
+  const { users } = useUsers();
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<Order | null>(null);
   const { toast } = useToast();
+
+  const sellers = users.filter(u => u.role === 'vendedor' && u.active);
 
   // New order form state
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -41,14 +47,19 @@ export default function Orders() {
   const grandTotal = subtotal + freight + taxSub - totalDiscount;
 
   const addItem = () => {
+    if (products.length === 0) {
+      toast({ title: 'Erro', description: 'Cadastre produtos antes de criar um pedido.', variant: 'destructive' });
+      return;
+    }
+    const firstProduct = products[0];
     setItems(prev => [...prev, {
       id: crypto.randomUUID(),
-      productId: '',
-      product: mockProducts[0],
+      productId: firstProduct.id,
+      product: firstProduct,
       quantity: 1,
-      unitPrice: mockProducts[0].salePrice,
+      unitPrice: firstProduct.salePrice,
       discount: 0,
-      total: mockProducts[0].salePrice,
+      total: firstProduct.salePrice,
     }]);
   };
 
@@ -57,7 +68,7 @@ export default function Orders() {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
       if (field === 'productId') {
-        const prod = mockProducts.find(p => p.id === value);
+        const prod = products.find((p: Product) => p.id === value);
         if (prod) {
           updated.product = prod;
           updated.unitPrice = prod.salePrice;
@@ -98,7 +109,7 @@ export default function Orders() {
       seller,
       status: 'rascunho',
     };
-    setOrders(prev => [newOrder, ...prev]);
+    addOrder(newOrder);
     setCreating(false);
     setItems([]);
     setSelectedClientId('');
@@ -118,16 +129,15 @@ export default function Orders() {
     setDeliveryDeadline('');
     setSeller('');
   };
+
   // Auto-open order form when coming from clients page
   useEffect(() => {
     const clientId = searchParams.get('clientId');
     if (clientId && clients.find(c => c.id === clientId)) {
       resetForm();
       setSelectedClientId(clientId);
-      // Pre-select first active seller
-      const activeSeller = mockUsers.find(u => u.role === 'vendedor' && u.active);
+      const activeSeller = sellers[0];
       if (activeSeller) setSeller(activeSeller.name);
-      // Clean URL
       setSearchParams({}, { replace: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,34 +161,38 @@ export default function Orders() {
       {/* Order list */}
       {!creating && (
         <Card className="p-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nº</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono font-bold">#{o.number}</TableCell>
-                  <TableCell>{new Date(o.date + 'T12:00:00').toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell className="font-medium">{o.client.name}</TableCell>
-                  <TableCell className="text-right font-semibold">R$ {o.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[o.status]}`}>{o.status}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => setViewing(o)}><Eye className="w-4 h-4" /></Button>
-                  </TableCell>
+          {orders.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma proposta cadastrada. Clique em "Nova Proposta" para começar.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {orders.map((o) => (
+                  <TableRow key={o.id}>
+                    <TableCell className="font-mono font-bold">#{o.number}</TableCell>
+                    <TableCell>{new Date(o.date + 'T12:00:00').toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="font-medium">{o.client.name}</TableCell>
+                    <TableCell className="text-right font-semibold">R$ {o.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[o.status]}`}>{o.status}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => setViewing(o)}><Eye className="w-4 h-4" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Card>
       )}
 
@@ -206,7 +220,7 @@ export default function Orders() {
                 <Select value={seller} onValueChange={setSeller}>
                   <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
                   <SelectContent>
-                    {mockUsers.filter(u => u.role === 'vendedor' && u.active).map(u => (
+                    {sellers.map(u => (
                       <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -255,7 +269,7 @@ export default function Orders() {
                           <Select value={item.product.id} onValueChange={v => updateItem(item.id, 'productId', v)}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {mockProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({p.costPrice.toFixed(2).replace('.', ',')})</SelectItem>)}
+                              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({p.costPrice.toFixed(2).replace('.', ',')})</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </TableCell>
