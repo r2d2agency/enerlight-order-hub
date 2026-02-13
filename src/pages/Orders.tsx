@@ -59,9 +59,9 @@ export default function Orders() {
       productId: firstProduct.id,
       product: firstProduct,
       quantity: 1,
-      unitPrice: firstProduct.salePrice,
+      unitPrice: firstProduct.conventionPrice,
       discount: 0,
-      total: firstProduct.salePrice,
+      total: firstProduct.conventionPrice,
     }]);
   };
 
@@ -73,8 +73,8 @@ export default function Orders() {
         const prod = products.find((p: Product) => p.id === value);
         if (prod) {
           updated.product = prod;
-          updated.unitPrice = prod.salePrice;
-          updated.total = prod.salePrice * updated.quantity;
+          updated.unitPrice = prod.conventionPrice;
+          updated.total = prod.conventionPrice * updated.quantity;
         }
       }
       if (field === 'quantity' || field === 'unitPrice' || field === 'discount') {
@@ -272,7 +272,7 @@ export default function Orders() {
                           <Select value={item.product.id} onValueChange={v => updateItem(item.id, 'productId', v)}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name}</SelectItem>)}
+                              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({p.costPrice.toFixed(2).replace('.', ',')})</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </TableCell>
