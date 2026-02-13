@@ -5,12 +5,14 @@ import { orderService } from '@/services';
 interface OrdersContextType {
   orders: Order[];
   addOrder: (order: Order) => void;
+  deleteOrder: (id: string) => void;
   loading: boolean;
 }
 
 const OrdersContext = createContext<OrdersContextType>({
   orders: [],
   addOrder: () => {},
+  deleteOrder: () => {},
   loading: true,
 });
 
@@ -29,8 +31,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     setOrders(prev => [order, ...prev]);
   };
 
+  const deleteOrder = (id: string) => {
+    setOrders(prev => prev.filter(o => o.id !== id));
+  };
+
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, loading }}>
+    <OrdersContext.Provider value={{ orders, addOrder, deleteOrder, loading }}>
       {children}
     </OrdersContext.Provider>
   );
