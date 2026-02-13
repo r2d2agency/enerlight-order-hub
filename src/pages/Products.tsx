@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ImagePlus } from 'lucide-react';
 import { Product } from '@/types';
 import { mockProducts } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
@@ -26,7 +26,7 @@ export default function Products() {
 
   const emptyProduct: Omit<Product, 'id'> = {
     code: '', name: '', description: '', costPrice: 0, salePrice: 0,
-    conventionPrice: 0, unit: 'PC', active: true,
+    conventionPrice: 0, unit: 'PC', active: true, imageUrl: '',
   };
 
   const [form, setForm] = useState<Omit<Product, 'id'>>(emptyProduct);
@@ -68,6 +68,32 @@ export default function Products() {
               <DialogTitle className="font-display">{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 mt-4">
+              {/* Image upload */}
+              <div className="col-span-2 flex items-center gap-4">
+                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 shrink-0">
+                  {form.imageUrl ? (
+                    <img src={form.imageUrl} alt="Produto" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <Label>Foto do Produto</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="mt-1"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const url = URL.createObjectURL(file);
+                        setForm({ ...form, imageUrl: url });
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG ou WEBP</p>
+                </div>
+              </div>
               <div>
                 <Label>Código</Label>
                 <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
@@ -121,6 +147,7 @@ export default function Products() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-14">Foto</TableHead>
               <TableHead className="w-20">Código</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead className="text-right">Custo</TableHead>
@@ -132,6 +159,15 @@ export default function Products() {
           <TableBody>
             {filtered.map((p) => (
               <TableRow key={p.id}>
+                <TableCell>
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt={p.name} className="w-10 h-10 rounded object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                      <ImagePlus className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="font-mono text-sm">{p.code}</TableCell>
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell className="text-right">R$ {p.costPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>

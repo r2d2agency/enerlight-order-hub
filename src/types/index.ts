@@ -8,6 +8,7 @@ export interface Product {
   conventionPrice: number;
   unit: string;
   active: boolean;
+  imageUrl?: string;
 }
 
 export interface Client {
