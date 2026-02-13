@@ -1,0 +1,63 @@
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Package, FileText, Users, Settings, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const navItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/produtos', icon: Package, label: 'Produtos' },
+  { to: '/pedidos', icon: FileText, label: 'Pedidos' },
+  { to: '/clientes', icon: Users, label: 'Clientes' },
+  { to: '/usuarios', icon: Settings, label: 'Usuários' },
+];
+
+export default function AppSidebar() {
+  const location = useLocation();
+
+  return (
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-secondary text-secondary-foreground flex flex-col">
+      <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
+          <Zap className="w-5 h-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h1 className="font-display text-lg font-bold tracking-tight text-secondary-foreground">ENERLIGHT</h1>
+          <p className="text-xs text-sidebar-foreground opacity-60">Sistema de Pedidos</p>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.to || 
+            (item.to !== '/' && location.pathname.startsWith(item.to));
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                isActive
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold text-sidebar-accent-foreground">
+            AD
+          </div>
+          <div className="text-sm">
+            <p className="font-medium text-sidebar-accent-foreground">Admin</p>
+            <p className="text-xs text-sidebar-foreground opacity-60">admin@enerlight.com.br</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
