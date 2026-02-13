@@ -12,7 +12,7 @@ const defaultBranding: BrandingConfig = {
   companyName: 'ENERLIGHT',
   subtitle: 'Sistema de Pedidos',
   logoUrl: '',
-  primaryColor: '38 92% 50%',
+  primaryColor: '217 91% 50%',
   sidebarColor: '220 25% 14%',
 };
 
