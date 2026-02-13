@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap, LogOut, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,13 +19,17 @@ export default function AppSidebar() {
   const navigate = useNavigate();
   const { branding } = useBranding();
   const { user, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-  return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-secondary text-secondary-foreground flex flex-col">
+
+  const closeMobile = () => setMobileOpen(false);
+
+  const sidebarContent = (
+    <>
       <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
         {branding.logoUrl ? (
           <img src={branding.logoUrl} alt="Logo" className="w-10 h-10 rounded-lg object-contain" />
@@ -37,16 +42,20 @@ export default function AppSidebar() {
           <h1 className="font-display text-lg font-bold tracking-tight text-secondary-foreground">{branding.companyName}</h1>
           <p className="text-xs text-sidebar-foreground opacity-60">{branding.subtitle}</p>
         </div>
+        <button onClick={closeMobile} className="ml-auto lg:hidden text-sidebar-foreground">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to || 
+          const isActive = location.pathname === item.to ||
             (item.to !== '/' && location.pathname.startsWith(item.to));
           return (
             <Link
               key={item.to}
               to={item.to}
+              onClick={closeMobile}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                 isActive
@@ -75,6 +84,39 @@ export default function AppSidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 lg:hidden bg-secondary text-secondary-foreground p-2 rounded-lg shadow-lg"
+        aria-label="Abrir menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={closeMobile} />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-50 h-screen w-64 bg-secondary text-secondary-foreground flex flex-col transition-transform duration-300 lg:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-screen w-64 bg-secondary text-secondary-foreground flex-col">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
