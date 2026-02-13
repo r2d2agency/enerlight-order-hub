@@ -17,11 +17,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers,
   });
 
-  if (res.status === 401 && !path.includes('/auth/me')) {
-    localStorage.removeItem('enerlight-token');
-    localStorage.removeItem('enerlight-user');
-    window.location.href = '/login';
-    throw new Error('Sessão expirada');
+  if (res.status === 401) {
+    // Don't force redirect — let AuthContext/ProtectedRoute handle auth state
+    const error = await res.json().catch(() => ({ message: 'Sessão expirada' }));
+    throw new Error(error.message || 'Sessão expirada');
   }
 
   if (!res.ok) {
