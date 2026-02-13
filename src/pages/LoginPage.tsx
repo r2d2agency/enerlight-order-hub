@@ -80,9 +80,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="text-xs text-center text-muted-foreground mt-6">
-          Demo: admin@enerlight.com.br / admin123
-        </p>
       </Card>
     </div>
   );
