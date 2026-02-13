@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, Search, ImagePlus } from 'lucide-react';
 import { Product } from '@/types';
-import { mockProducts } from '@/data/mockData';
+import { productService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -31,27 +32,51 @@ export default function Products() {
 
   const [form, setForm] = useState<Omit<Product, 'id'>>(emptyProduct);
 
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await productService.list();
+      setProducts(data);
+    } catch {
+      toast({ title: 'Erro ao carregar produtos', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchProducts(); }, []);
+
   const openNew = () => { setEditing(null); setForm(emptyProduct); setDialogOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setForm(p); setDialogOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.code || !form.name) {
       toast({ title: 'Erro', description: 'Código e nome são obrigatórios.', variant: 'destructive' });
       return;
     }
-    if (editing) {
-      setProducts(prev => prev.map(p => p.id === editing.id ? { ...form, id: editing.id } : p));
-      toast({ title: 'Produto atualizado!' });
-    } else {
-      setProducts(prev => [...prev, { ...form, id: crypto.randomUUID() }]);
-      toast({ title: 'Produto cadastrado!' });
+    try {
+      if (editing) {
+        await productService.update(editing.id, form);
+        toast({ title: 'Produto atualizado!' });
+      } else {
+        await productService.create(form);
+        toast({ title: 'Produto cadastrado!' });
+      }
+      setDialogOpen(false);
+      fetchProducts();
+    } catch {
+      toast({ title: 'Erro ao salvar produto', variant: 'destructive' });
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-    toast({ title: 'Produto removido.' });
+  const handleDelete = async (id: string) => {
+    try {
+      await productService.delete(id);
+      toast({ title: 'Produto removido.' });
+      fetchProducts();
+    } catch {
+      toast({ title: 'Erro ao remover produto', variant: 'destructive' });
+    }
   };
 
   return (

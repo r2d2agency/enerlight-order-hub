@@ -110,9 +110,31 @@ async function migrate() {
       VALUES ('Admin Enerlight', 'admin@enerlight.com.br', $1, 'admin')
       ON CONFLICT (email) DO NOTHING
     `, [hash]);
-    
+
+    // Seed products
+    const products = [
+      { code: '518', name: 'LED PLAFON RECUADO EMBUTIR', description: 'LUMINÁRIA LED PLAFON RECUADO EMBUTIR, POTENCIA 18W, FLUXO LUMINOSO 2.050 LM, COR 3.000K/4.000K, ÂNGULO 120°, IP 30, VIDA ÚTIL 25.000H, DIMENSÕES 200x200x80mm.', costPrice: 17.45, salePrice: 150, conventionPrice: 64.9 },
+      { code: '897', name: 'LUMINÁRIA LINEAR E40 SOBREPOR 1M 3000K', description: 'LUMINÁRIA LINEAR E40, POTENCIA 27W, 220V, FLUXO LUMINOSO 3.700 LM, COR 3.000K, ACABAMENTO BRANCO, ÂNGULO 120°, IP 40, VIDA ÚTIL 30.000H, DIMENSÕES 1.000x60x80mm.', costPrice: 113.61, salePrice: 390, conventionPrice: 358.8 },
+      { code: '896', name: 'LUMINÁRIA LINEAR E40 SOBREPOR 1,5M 3000K', description: 'LUMINÁRIA LINEAR E40, POTENCIA 27W, 220V, FLUXO LUMINOSO 3.700 LM, COR 3.000K, ACABAMENTO BRANCO, ÂNGULO 120°, IP 40, VIDA ÚTIL 30.000H, DIMENSÕES 1.500x60x80mm.', costPrice: 168.68, salePrice: 450, conventionPrice: 414 },
+      { code: '506', name: 'LUMINÁRIA PENDENTE BR MANIA', description: 'LUMINÁRIA PENDENTE BR MANIA, POTENCIA 9W, FLUXO LUMINOSO 800 LM, COR 3.000K, ACABAMENTO BRANCO, ÂNGULO 60°, IP 20, ALUMINIO PRETO, VIDA ÚTIL 30.000H, DIMENSÕES Ø370x170mm.', costPrice: 87.78, salePrice: 240, conventionPrice: 139.9 },
+      { code: '14', name: 'PETRO E 100 90°', description: 'Driver 100W, Fluxo Luminoso 13.380 lm, eficiência 194 lm/W, tensão 220V, cor 5000K, IP66, vida útil 100.000h, garantia 5 anos.', costPrice: 197.79, salePrice: 570, conventionPrice: 524.4 },
+      { code: '16', name: 'PETRO E 150 90°', description: 'Driver 150W, Fluxo Luminoso 26.760 lm, eficiência 194 lm/W, tensão 220V, cor 5000K, vida útil 100.000h, garantia 5 anos.', costPrice: 349.17, salePrice: 850, conventionPrice: 782 },
+      { code: '1508', name: 'LUMINÁRIA PÚBLICA 100W', description: 'Driver 100W, Fluxo Luminoso 12.200 lm, 220V, alumínio injetado, lente fotometria, vidro temperado, cor 5000K, IP66, vida útil 70.000h, garantia 5 anos. SEM SOQUETE.', costPrice: 195.78, salePrice: 620, conventionPrice: 570.4 },
+      { code: '2154', name: 'LUMINÁRIA PÚBLICA 150W', description: 'Driver 150W, Fluxo Luminoso 21.000 lm, 220V, alumínio injetado, lente fotometria, vidro temperado, cor 5000K, IP66, vida útil 70.000h, garantia 5 anos. SEM SOQUETE.', costPrice: 0, salePrice: 790, conventionPrice: 726.8 },
+    ];
+
+    for (const p of products) {
+      await pool.query(
+        `INSERT INTO products (code, name, description, cost_price, sale_price, convention_price, unit)
+         VALUES ($1, $2, $3, $4, $5, $6, 'PC')
+         ON CONFLICT (code) DO NOTHING`,
+        [p.code, p.name, p.description, p.costPrice, p.salePrice, p.conventionPrice]
+      );
+    }
+
     console.log('✅ Migração concluída!');
     console.log('👤 Admin criado: admin@enerlight.com.br / admin123');
+    console.log('📦 8 produtos inseridos');
     process.exit(0);
   } catch (err) {
     console.error('❌ Erro na migração:', err);
