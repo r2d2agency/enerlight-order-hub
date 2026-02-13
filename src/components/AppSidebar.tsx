@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, FileText, Users, Settings, Zap } from 'lucide-react';
+import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBranding } from '@/contexts/BrandingContext';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -8,20 +9,26 @@ const navItems = [
   { to: '/pedidos', icon: FileText, label: 'Pedidos' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/usuarios', icon: Settings, label: 'Usuários' },
+  { to: '/configuracoes', icon: Palette, label: 'Configurações' },
 ];
 
 export default function AppSidebar() {
   const location = useLocation();
+  const { branding } = useBranding();
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-secondary text-secondary-foreground flex flex-col">
       <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-          <Zap className="w-5 h-5 text-primary-foreground" />
-        </div>
+        {branding.logoUrl ? (
+          <img src={branding.logoUrl} alt="Logo" className="w-10 h-10 rounded-lg object-contain" />
+        ) : (
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
+            <Zap className="w-5 h-5 text-primary-foreground" />
+          </div>
+        )}
         <div>
-          <h1 className="font-display text-lg font-bold tracking-tight text-secondary-foreground">ENERLIGHT</h1>
-          <p className="text-xs text-sidebar-foreground opacity-60">Sistema de Pedidos</p>
+          <h1 className="font-display text-lg font-bold tracking-tight text-secondary-foreground">{branding.companyName}</h1>
+          <p className="text-xs text-sidebar-foreground opacity-60">{branding.subtitle}</p>
         </div>
       </div>
 

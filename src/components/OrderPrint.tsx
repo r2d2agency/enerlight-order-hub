@@ -1,11 +1,13 @@
 import { Order } from '@/types';
 import { Zap } from 'lucide-react';
+import { useBranding } from '@/contexts/BrandingContext';
 
 interface OrderPrintProps {
   order: Order;
 }
 
 export default function OrderPrint({ order }: OrderPrintProps) {
+  const { branding } = useBranding();
   const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const formatDate = (d: string) => {
     const date = new Date(d + 'T12:00:00');
@@ -17,12 +19,16 @@ export default function OrderPrint({ order }: OrderPrintProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
+          {branding.logoUrl ? (
+            <img src={branding.logoUrl} alt="Logo" className="w-12 h-12 rounded-xl object-contain" />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+              <Zap className="w-6 h-6 text-primary-foreground" />
+            </div>
+          )}
           <div>
-            <h1 className="font-display text-xl font-bold text-card-foreground">ENERLIGHT</h1>
-            <p className="text-xs text-muted-foreground">SOLUÇÕES EM ILUMINAÇÃO</p>
+            <h1 className="font-display text-xl font-bold text-card-foreground">{branding.companyName}</h1>
+            <p className="text-xs text-muted-foreground">{branding.subtitle}</p>
           </div>
         </div>
         <div className="text-right">
