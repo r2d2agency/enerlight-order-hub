@@ -8,6 +8,8 @@ export const authService = {
   register: (data: { name: string; email: string; password: string; role: string }) =>
     api.post<{ token: string; user: User }>('/auth/register', data),
   me: () => api.get<User>('/auth/me'),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.put<{ message: string }>('/auth/change-password', { currentPassword, newPassword }),
 };
 
 // Products

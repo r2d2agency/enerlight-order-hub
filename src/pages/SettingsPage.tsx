@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useToast } from '@/hooks/use-toast';
-import { Palette, Type, ImagePlus, RotateCcw } from 'lucide-react';
+import { Palette, Type, ImagePlus, RotateCcw, Lock } from 'lucide-react';
+import { authService } from '@/services';
 
 const presetColors = [
   { label: 'Âmbar', value: '38 92% 50%' },
@@ -68,6 +69,38 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [name, setName] = useState(branding.companyName);
   const [subtitle, setSubtitle] = useState(branding.subtitle);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast({ title: 'Erro', description: 'Preencha todos os campos.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: 'Erro', description: 'A nova senha deve ter no mínimo 6 caracteres.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Erro', description: 'As senhas não conferem.', variant: 'destructive' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+      toast({ title: 'Senha alterada com sucesso!' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao alterar senha';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const handleSave = () => {
     updateBranding({ companyName: name, subtitle });
@@ -209,6 +242,30 @@ export default function SettingsPage() {
                 <span className="text-xs text-muted-foreground">{c.label}</span>
               </button>
             ))}
+          </div>
+        </Card>
+        {/* Change Password */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Lock className="w-5 h-5 text-primary" />
+            <h3 className="font-display font-semibold text-lg">Alterar Senha</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <Label>Senha Atual</Label>
+              <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div>
+              <Label>Nova Senha</Label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+            </div>
+            <div>
+              <Label>Confirmar Nova Senha</Label>
+              <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" />
+            </div>
+            <Button onClick={handleChangePassword} disabled={changingPassword} className="w-full">
+              {changingPassword ? 'Alterando...' : 'Alterar Senha'}
+            </Button>
           </div>
         </Card>
       </div>
