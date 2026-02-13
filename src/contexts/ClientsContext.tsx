@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Client } from '@/types';
 import { clientService } from '@/services';
 
+const STORAGE_KEY = 'enerlight-clients';
+
 interface ClientsContextType {
   clients: Client[];
   addClient: (client: Omit<Client, 'id'>) => Client;
@@ -18,21 +20,33 @@ const ClientsContext = createContext<ClientsContextType>({
   loading: true,
 });
 
+function loadFromStorage(): Client[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch { return []; }
+}
+
+function saveToStorage(clients: Client[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+}
+
 export function ClientsProvider({ children }: { children: ReactNode }) {
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<Client[]>(loadFromStorage);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     clientService.list()
-      .then(data => setClients(data))
-      .catch(() => { /* API unavailable, keep empty */ })
+      .then(data => { setClients(data); saveToStorage(data); })
+      .catch(() => { /* API unavailable, keep localStorage data */ })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { saveToStorage(clients); }, [clients]);
 
   const addClient = (data: Omit<Client, 'id'>) => {
     const newClient: Client = { ...data, id: crypto.randomUUID() };
     setClients(prev => [...prev, newClient]);
-    // Try API in background
     clientService.create(data).catch(() => {});
     return newClient;
   };
