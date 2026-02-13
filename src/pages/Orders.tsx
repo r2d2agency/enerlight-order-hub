@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Eye, Trash2, FileText, X } from 'lucide-react';
 import { Order, OrderItem, Product } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
@@ -20,7 +21,8 @@ import OrderPrint from '@/components/OrderPrint';
 
 export default function Orders() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { orders, addOrder } = useOrders();
+  const { orders, addOrder, deleteOrder } = useOrders();
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
   const { clients } = useClients();
   const { products } = useProducts();
   const { users } = useUsers();
@@ -187,6 +189,7 @@ export default function Orders() {
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => setViewing(o)}><Eye className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeletingOrder(o)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -339,6 +342,20 @@ export default function Orders() {
           {viewing && <OrderPrint order={viewing} />}
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deletingOrder} onOpenChange={() => setDeletingOrder(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Proposta #{deletingOrder?.number}?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (deletingOrder) { deleteOrder(deletingOrder.id); toast({ title: `Proposta #${deletingOrder.number} excluída.` }); setDeletingOrder(null); } }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
