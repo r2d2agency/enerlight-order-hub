@@ -41,10 +41,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md p-8 animate-fade-in">
         <div className="flex flex-col items-center mb-8">
           {branding.logoUrl ? (
-            <img src={branding.logoUrl} alt="Logo" className="w-16 h-16 rounded-xl object-contain mb-3" />
+            <img src={branding.logoUrl} alt="Logo" className="w-36 h-36 rounded-xl object-contain mb-4" />
           ) : (
-            <div className="w-16 h-16 rounded-xl bg-primary flex items-center justify-center mb-3">
-              <Zap className="w-8 h-8 text-primary-foreground" />
+            <div className="w-36 h-36 rounded-xl bg-primary flex items-center justify-center mb-4">
+              <Zap className="w-16 h-16 text-primary-foreground" />
             </div>
           )}
           <h1 className="font-display text-2xl font-bold text-card-foreground">{branding.companyName}</h1>
