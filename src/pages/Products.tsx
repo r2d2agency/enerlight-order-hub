@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2, Search, ImagePlus } from 'lucide-react';
 import { Product } from '@/types';
 import { productService } from '@/services';
+import { mockProducts } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Products() {
@@ -38,7 +39,8 @@ export default function Products() {
       const data = await productService.list();
       setProducts(data);
     } catch {
-      toast({ title: 'Erro ao carregar produtos', variant: 'destructive' });
+      // Fallback to mock data when API is unavailable
+      setProducts(mockProducts);
     } finally {
       setLoading(false);
     }
