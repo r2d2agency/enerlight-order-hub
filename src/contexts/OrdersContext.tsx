@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Order } from '@/types';
 import { orderService } from '@/services';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'enerlight-orders';
 
@@ -36,7 +37,10 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     orderService.list()
       .then(data => { setOrders(data); saveToStorage(data); })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Erro ao carregar pedidos da API:', err);
+        toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
+      })
       .finally(() => setLoading(false));
   }, []);
 

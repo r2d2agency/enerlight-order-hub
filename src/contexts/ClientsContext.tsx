@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Client } from '@/types';
 import { clientService } from '@/services';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'enerlight-clients';
 
@@ -38,7 +39,10 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     clientService.list()
       .then(data => { setClients(data); saveToStorage(data); })
-      .catch(() => { /* API unavailable, keep localStorage data */ })
+      .catch((err) => {
+        console.error('Erro ao carregar clientes da API:', err);
+        toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -47,18 +51,36 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   const addClient = (data: Omit<Client, 'id'>) => {
     const newClient: Client = { ...data, id: crypto.randomUUID() };
     setClients(prev => [...prev, newClient]);
-    clientService.create(data).catch(() => {});
+    clientService.create(data)
+      .then((created) => {
+        // Replace local ID with server ID
+        setClients(prev => prev.map(c => c.id === newClient.id ? created : c));
+        toast.success('Cliente salvo no servidor!');
+      })
+      .catch((err) => {
+        console.error('Erro ao salvar cliente na API:', err);
+        toast.error('Erro ao salvar no servidor. Cliente salvo apenas localmente.');
+      });
     return newClient;
   };
 
   const updateClient = (id: string, data: Omit<Client, 'id'>) => {
     setClients(prev => prev.map(c => c.id === id ? { ...data, id } : c));
-    clientService.update(id, data).catch(() => {});
+    clientService.update(id, data)
+      .then(() => toast.success('Cliente atualizado no servidor!'))
+      .catch((err) => {
+        console.error('Erro ao atualizar cliente na API:', err);
+        toast.error('Erro ao atualizar no servidor.');
+      });
   };
 
   const deleteClient = (id: string) => {
     setClients(prev => prev.filter(c => c.id !== id));
-    clientService.delete(id).catch(() => {});
+    clientService.delete(id)
+      .catch((err) => {
+        console.error('Erro ao remover cliente na API:', err);
+        toast.error('Erro ao remover no servidor.');
+      });
   };
 
   return (

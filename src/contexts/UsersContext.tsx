@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
 import { userService } from '@/services';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'enerlight-users';
 
@@ -26,7 +27,6 @@ function loadFromStorage(): User[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     const parsed = data ? JSON.parse(data) : [];
-    // Ensure admin always exists
     if (!parsed.find((u: User) => u.email === 'admin@enerlight.com.br')) {
       parsed.unshift(DEFAULT_ADMIN);
     }
@@ -45,7 +45,10 @@ export function UsersProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     userService.list()
       .then(data => { setUsers(data); saveToStorage(data); })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Erro ao carregar usuários da API:', err);
+        toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -55,18 +58,32 @@ export function UsersProvider({ children }: { children: ReactNode }) {
     try {
       const created = await userService.create(data);
       setUsers(prev => [...prev, created]);
-    } catch {
+      toast.success('Usuário salvo no servidor!');
+    } catch (err) {
+      console.error('Erro ao salvar usuário na API:', err);
+      toast.error('Erro ao salvar no servidor. Usuário salvo apenas localmente.');
       setUsers(prev => [...prev, { id: crypto.randomUUID(), name: data.name, email: data.email, role: data.role, active: data.active }]);
     }
   };
 
   const updateUser = async (id: string, data: Partial<User> & { password?: string }) => {
-    try { await userService.update(id, data); } catch {}
+    try {
+      await userService.update(id, data);
+      toast.success('Usuário atualizado no servidor!');
+    } catch (err) {
+      console.error('Erro ao atualizar usuário na API:', err);
+      toast.error('Erro ao atualizar no servidor.');
+    }
     setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
   };
 
   const deleteUser = async (id: string) => {
-    try { await userService.delete(id); } catch {}
+    try {
+      await userService.delete(id);
+    } catch (err) {
+      console.error('Erro ao remover usuário na API:', err);
+      toast.error('Erro ao remover no servidor.');
+    }
     setUsers(prev => prev.filter(u => u.id !== id));
   };
 

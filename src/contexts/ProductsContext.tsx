@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '@/types';
 import { productService } from '@/services';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'enerlight-products';
 
@@ -38,7 +39,10 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     productService.list()
       .then(data => { setProducts(data); saveToStorage(data); })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Erro ao carregar produtos da API:', err);
+        toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -48,7 +52,10 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     try {
       const created = await productService.create(data);
       setProducts(prev => [...prev, created]);
-    } catch {
+      toast.success('Produto salvo no servidor!');
+    } catch (err) {
+      console.error('Erro ao salvar produto na API:', err);
+      toast.error('Erro ao salvar no servidor. Produto salvo apenas localmente.');
       setProducts(prev => [...prev, { ...data, id: crypto.randomUUID() } as Product]);
     }
   };
@@ -56,12 +63,21 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const updateProduct = async (id: string, data: Partial<Product>) => {
     try {
       await productService.update(id, data);
-    } catch {}
+      toast.success('Produto atualizado no servidor!');
+    } catch (err) {
+      console.error('Erro ao atualizar produto na API:', err);
+      toast.error('Erro ao atualizar no servidor.');
+    }
     setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
   };
 
   const deleteProduct = async (id: string) => {
-    try { await productService.delete(id); } catch {}
+    try {
+      await productService.delete(id);
+    } catch (err) {
+      console.error('Erro ao remover produto na API:', err);
+      toast.error('Erro ao remover no servidor.');
+    }
     setProducts(prev => prev.filter(p => p.id !== id));
   };
 
