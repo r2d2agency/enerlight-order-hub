@@ -52,6 +52,7 @@ export default function OrderPrint({ order }: OrderPrintProps) {
         <thead>
           <tr className="border-b-2 border-primary/20">
             <th className="text-left py-2 text-muted-foreground font-medium">Seq.</th>
+            <th className="text-left py-2 text-muted-foreground font-medium w-12">Foto</th>
             <th className="text-left py-2 text-muted-foreground font-medium">Produto</th>
             <th className="text-left py-2 text-muted-foreground font-medium">Descrição</th>
             <th className="text-center py-2 text-muted-foreground font-medium">Un.</th>
@@ -64,6 +65,13 @@ export default function OrderPrint({ order }: OrderPrintProps) {
           {order.items.map((item, i) => (
             <tr key={item.id} className="border-b border-border">
               <td className="py-2">{i + 1}</td>
+              <td className="py-2">
+                {item.product.imageUrl ? (
+                  <img src={item.product.imageUrl} alt={item.product.name} className="w-10 h-10 rounded object-cover" />
+                ) : (
+                  <div className="w-10 h-10 rounded bg-muted" />
+                )}
+              </td>
               <td className="py-2 font-mono text-xs">{item.product.code}</td>
               <td className="py-2">{item.product.name}</td>
               <td className="py-2 text-center">{item.product.unit}</td>

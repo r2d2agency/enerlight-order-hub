@@ -231,8 +231,8 @@ export default function Orders() {
               <Button variant="ghost" size="icon" onClick={() => setCreating(false)}><X className="w-5 h-5" /></Button>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="sm:col-span-2">
                 <Label>Cliente</Label>
                 <Select value={selectedClientId} onValueChange={setSelectedClientId}>
                   <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
@@ -277,27 +277,35 @@ export default function Orders() {
                 <Button variant="outline" size="sm" onClick={addItem}><Plus className="w-4 h-4 mr-1" /> Adicionar Item</Button>
               </div>
               {items.length > 0 && (
+                <div className="overflow-x-auto -mx-3 px-3">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Produto</TableHead>
-                      <TableHead className="w-24">Qtd.</TableHead>
-                      <TableHead className="w-32">Preço Un.</TableHead>
-                      <TableHead className="w-32">Desc. Un.</TableHead>
-                      <TableHead className="w-32 text-right">Total</TableHead>
-                      <TableHead className="w-12"></TableHead>
+                      <TableHead className="w-20">Qtd.</TableHead>
+                      <TableHead className="w-28">Preço Un.</TableHead>
+                      <TableHead className="w-28">Desc. Un.</TableHead>
+                      <TableHead className="w-28 text-right">Total</TableHead>
+                      <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell>
-                          <Select value={item.product.id} onValueChange={v => updateItem(item.id, 'productId', v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({p.costPrice.toFixed(2).replace('.', ',')})</SelectItem>)}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex items-center gap-2">
+                            {item.product.imageUrl ? (
+                              <img src={item.product.imageUrl} alt={item.product.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-muted shrink-0" />
+                            )}
+                            <Select value={item.product.id} onValueChange={v => updateItem(item.id, 'productId', v)}>
+                              <SelectTrigger className="min-w-[160px]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({p.costPrice.toFixed(2).replace('.', ',')})</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, 'quantity', +e.target.value)} />
@@ -318,11 +326,12 @@ export default function Orders() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </div>
 
             {/* Totals */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div>
                 <Label>Frete (R$)</Label>
                 <Input type="number" step="0.01" value={freight} onChange={e => setFreight(+e.target.value)} />
@@ -331,7 +340,7 @@ export default function Orders() {
                 <Label>Subst. Tributária (R$)</Label>
                 <Input type="number" step="0.01" value={taxSub} onChange={e => setTaxSub(+e.target.value)} />
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <Label>Observações</Label>
                 <Textarea value={obs} onChange={e => setObs(e.target.value)} rows={2} />
               </div>
