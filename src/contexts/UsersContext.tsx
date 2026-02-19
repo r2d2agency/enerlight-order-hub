@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
 import { userService } from '@/services';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const STORAGE_KEY = 'enerlight-users';
@@ -39,10 +40,12 @@ function saveToStorage(users: User[]) {
 }
 
 export function UsersProvider({ children }: { children: ReactNode }) {
+  const { token } = useAuth();
   const [users, setUsers] = useState<User[]>(loadFromStorage);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!token) { setLoading(false); return; }
     userService.list()
       .then(data => { setUsers(data); saveToStorage(data); })
       .catch((err) => {
@@ -50,7 +53,7 @@ export function UsersProvider({ children }: { children: ReactNode }) {
         toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   useEffect(() => { saveToStorage(users); }, [users]);
 
