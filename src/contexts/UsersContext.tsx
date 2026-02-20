@@ -46,6 +46,9 @@ export function UsersProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
+    const cachedUser = localStorage.getItem('enerlight-user');
+    const role = cachedUser ? JSON.parse(cachedUser)?.role : null;
+    if (role !== 'admin') { setLoading(false); return; }
     userService.list()
       .then(data => { setUsers(data); saveToStorage(data); })
       .catch((err) => {

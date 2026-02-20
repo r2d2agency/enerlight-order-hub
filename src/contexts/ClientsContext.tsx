@@ -8,7 +8,7 @@ const STORAGE_KEY = 'enerlight-clients';
 
 interface ClientsContextType {
   clients: Client[];
-  addClient: (client: Omit<Client, 'id'>) => Client;
+  addClient: (client: Omit<Client, 'id'>) => Promise<Client>;
   updateClient: (id: string, data: Omit<Client, 'id'>) => void;
   deleteClient: (id: string) => void;
   loading: boolean;
@@ -16,7 +16,7 @@ interface ClientsContextType {
 
 const ClientsContext = createContext<ClientsContextType>({
   clients: [],
-  addClient: () => ({ id: '', name: '', cnpj: '', address: '', neighborhood: '', city: '', state: '', phone: '', email: '' }),
+  addClient: async () => ({ id: '', name: '', cnpj: '', address: '', neighborhood: '', city: '', state: '', phone: '', email: '' }),
   updateClient: () => {},
   deleteClient: () => {},
   loading: true,
@@ -51,20 +51,19 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { saveToStorage(clients); }, [clients]);
 
-  const addClient = (data: Omit<Client, 'id'>) => {
-    const newClient: Client = { ...data, id: crypto.randomUUID() };
-    setClients(prev => [...prev, newClient]);
-    clientService.create(data)
-      .then((created) => {
-        // Replace local ID with server ID
-        setClients(prev => prev.map(c => c.id === newClient.id ? created : c));
-        toast.success('Cliente salvo no servidor!');
-      })
-      .catch((err) => {
-        console.error('Erro ao salvar cliente na API:', err);
-        toast.error('Erro ao salvar no servidor. Cliente salvo apenas localmente.');
-      });
-    return newClient;
+  const addClient = async (data: Omit<Client, 'id'>) => {
+    try {
+      const created = await clientService.create(data);
+      setClients(prev => [...prev, created]);
+      toast.success('Cliente salvo no servidor!');
+      return created;
+    } catch (err) {
+      console.error('Erro ao salvar cliente na API:', err);
+      toast.error('Erro ao salvar no servidor. Cliente salvo apenas localmente.');
+      const newClient: Client = { ...data, id: crypto.randomUUID() };
+      setClients(prev => [...prev, newClient]);
+      return newClient;
+    }
   };
 
   const updateClient = (id: string, data: Omit<Client, 'id'>) => {

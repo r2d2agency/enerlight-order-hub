@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, FileText, Phone, Mail, MapPin, Search } from 'lucide-react';
 import { Client } from '@/types';
@@ -31,19 +31,27 @@ export default function Clients() {
   const openNew = () => { setEditing(null); setForm(emptyClient); setDialogOpen(true); };
   const openEdit = (c: Client) => { setEditing(c); setForm(c); setDialogOpen(true); };
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
     if (!form.name) {
       toast({ title: 'Erro', description: 'Nome é obrigatório.', variant: 'destructive' });
       return;
     }
-    if (editing) {
-      updateClient(editing.id, form);
-      toast({ title: 'Cliente atualizado!' });
-    } else {
-      addClient(form);
-      toast({ title: 'Cliente cadastrado!' });
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (editing) {
+        updateClient(editing.id, form);
+        toast({ title: 'Cliente atualizado!' });
+      } else {
+        await addClient(form);
+        toast({ title: 'Cliente cadastrado!' });
+      }
+      setDialogOpen(false);
+    } finally {
+      setSaving(false);
     }
-    setDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -63,6 +71,7 @@ export default function Clients() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
+              <DialogDescription>Preencha os dados do cliente abaixo.</DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div className="col-span-1 sm:col-span-2">
@@ -110,7 +119,7 @@ export default function Clients() {
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave}>Salvar</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
             </div>
           </DialogContent>
         </Dialog>
