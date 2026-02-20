@@ -12,8 +12,15 @@ const userRoutes = require('./routes/users');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, origin || '*');
+    }
+    return callback(new Error('CORS not allowed'), false);
+  },
   credentials: true,
 }));
 app.use(express.json());
