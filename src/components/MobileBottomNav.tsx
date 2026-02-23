@@ -93,7 +93,10 @@ export default function MobileBottomNav() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{p.name}</p>
+                    <p className="font-medium text-sm truncate">
+                      <span className="font-mono text-xs text-muted-foreground mr-1">{Number(p.costPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      {p.name}
+                    </p>
                     <p className="text-xs text-muted-foreground font-mono">{p.code} · {p.unit}</p>
                   </div>
                   <div className="text-right shrink-0">
@@ -101,9 +104,6 @@ export default function MobileBottomNav() {
                       R$ {Number(p.conventionPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-xs text-muted-foreground">convenção</p>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      {Number(p.costPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
                   </div>
                 </div>
               ))
