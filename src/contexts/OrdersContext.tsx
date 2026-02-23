@@ -4,8 +4,6 @@ import { orderService } from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-const STORAGE_KEY = 'enerlight-orders';
-
 interface OrdersContextType {
   orders: Order[];
   addOrder: (order: Order) => void;
@@ -20,37 +18,26 @@ const OrdersContext = createContext<OrdersContextType>({
   loading: true,
 });
 
-function loadFromStorage(): Order[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch { return []; }
-}
-
-function saveToStorage(orders: Order[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-}
-
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
-  const [orders, setOrders] = useState<Order[]>(loadFromStorage);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
     orderService.list()
-      .then(data => { setOrders(data); saveToStorage(data); })
+      .then(data => setOrders(data))
       .catch((err) => {
         console.error('Erro ao carregar pedidos da API:', err);
-        toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
+        toast.error('Erro ao carregar pedidos do servidor.');
       })
       .finally(() => setLoading(false));
   }, [token]);
 
-  useEffect(() => { saveToStorage(orders); }, [orders]);
-
-  const addOrder = (order: Order) => {
-    setOrders(prev => [order, ...prev]);
+  const addOrder = async (order: Order) => {
+    const created = await orderService.create(order);
+    setOrders(prev => [created, ...prev]);
+    toast.success('Pedido salvo!');
   };
 
   const deleteOrder = (id: string) => {

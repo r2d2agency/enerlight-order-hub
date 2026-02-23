@@ -4,8 +4,6 @@ import { productService } from '@/services';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-const STORAGE_KEY = 'enerlight-products';
-
 interface ProductsContextType {
   products: Product[];
   addProduct: (data: Omit<Product, 'id'>) => void;
@@ -22,66 +20,38 @@ const ProductsContext = createContext<ProductsContextType>({
   loading: true,
 });
 
-function loadFromStorage(): Product[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch { return []; }
-}
-
-function saveToStorage(products: Product[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-}
-
 export function ProductsProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
-  const [products, setProducts] = useState<Product[]>(loadFromStorage);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
     productService.list()
-      .then(data => { setProducts(data); saveToStorage(data); })
+      .then(data => setProducts(data))
       .catch((err) => {
         console.error('Erro ao carregar produtos da API:', err);
-        toast.error('Não foi possível conectar ao servidor. Usando dados locais.');
+        toast.error('Erro ao carregar produtos do servidor.');
       })
       .finally(() => setLoading(false));
   }, [token]);
 
-  useEffect(() => { saveToStorage(products); }, [products]);
-
   const addProduct = async (data: Omit<Product, 'id'>) => {
-    try {
-      const created = await productService.create(data);
-      setProducts(prev => [...prev, created]);
-      toast.success('Produto salvo no servidor!');
-    } catch (err) {
-      console.error('Erro ao salvar produto na API:', err);
-      toast.error('Erro ao salvar no servidor. Produto salvo apenas localmente.');
-      setProducts(prev => [...prev, { ...data, id: crypto.randomUUID() } as Product]);
-    }
+    const created = await productService.create(data);
+    setProducts(prev => [...prev, created]);
+    toast.success('Produto salvo!');
   };
 
   const updateProduct = async (id: string, data: Partial<Product>) => {
-    try {
-      await productService.update(id, data);
-      toast.success('Produto atualizado no servidor!');
-    } catch (err) {
-      console.error('Erro ao atualizar produto na API:', err);
-      toast.error('Erro ao atualizar no servidor.');
-    }
+    await productService.update(id, data);
     setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+    toast.success('Produto atualizado!');
   };
 
   const deleteProduct = async (id: string) => {
-    try {
-      await productService.delete(id);
-    } catch (err) {
-      console.error('Erro ao remover produto na API:', err);
-      toast.error('Erro ao remover no servidor.');
-    }
+    await productService.delete(id);
     setProducts(prev => prev.filter(p => p.id !== id));
+    toast.success('Produto removido!');
   };
 
   return (
