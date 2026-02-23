@@ -21,61 +21,37 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const cached = localStorage.getItem('enerlight-user');
-    if (cached) {
-      try { return JSON.parse(cached); } catch { /* ignore */ }
-    }
-    return null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('enerlight-token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only check on initial mount, not after login
     if (token) {
       authService.me()
-        .then(u => {
-          setUser(u);
-          localStorage.setItem('enerlight-user', JSON.stringify(u));
-        })
+        .then(u => setUser(u))
         .catch(() => {
-          // API not available — keep cached user (already loaded in state init)
+          // Token invalid — clear session
+          setToken(null);
+          localStorage.removeItem('enerlight-token');
         })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on mount
+  }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const res = await authService.login(email, password);
-      setToken(res.token);
-      setUser(res.user);
-      localStorage.setItem('enerlight-token', res.token);
-      localStorage.setItem('enerlight-user', JSON.stringify(res.user));
-    } catch {
-      // Fallback: if API not ready, allow demo login
-      if (email === 'admin@enerlight.com.br' && password === 'admin123') {
-        const demoUser: User = { id: '1', name: 'Admin Enerlight', email, role: 'admin', active: true };
-        const demoToken = 'demo-token';
-        setToken(demoToken);
-        setUser(demoUser);
-        localStorage.setItem('enerlight-token', demoToken);
-        localStorage.setItem('enerlight-user', JSON.stringify(demoUser));
-        return;
-      }
-      throw new Error('Email ou senha inválidos');
-    }
+    const res = await authService.login(email, password);
+    setToken(res.token);
+    setUser(res.user);
+    localStorage.setItem('enerlight-token', res.token);
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('enerlight-token');
-    localStorage.removeItem('enerlight-user');
   };
 
   return (
