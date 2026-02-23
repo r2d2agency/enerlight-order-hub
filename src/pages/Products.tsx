@@ -230,45 +230,77 @@ export default function Products() {
         {products.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">Nenhum produto cadastrado. Clique em "Novo Produto" para começar.</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-14">Foto</TableHead>
-                <TableHead className="w-20">Código</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead className="text-right">Custo</TableHead>
-                <TableHead className="text-right">Venda</TableHead>
-                <TableHead className="text-right">Convenção</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Mobile: Cards */}
+            <div className="space-y-3 lg:hidden">
               {filtered.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.name} className="w-10 h-10 rounded object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                        <ImagePlus className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">{p.code}</TableCell>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-right">R$ {Number(p.costPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell className="text-right font-semibold">R$ {Number(p.salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell className="text-right">R$ {Number(p.conventionPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt={p.name} className="w-14 h-14 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <ImagePlus className="w-5 h-5 text-muted-foreground" />
                     </div>
-                  </TableCell>
-                </TableRow>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{p.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{p.code} · {p.unit}</p>
+                    <div className="flex gap-3 mt-1 text-xs">
+                      <span className="text-muted-foreground">Custo: R$ {Number(p.costPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="font-semibold text-primary">Venda: R$ {Number(p.salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+
+            {/* Desktop: Table */}
+            <div className="hidden lg:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-14">Foto</TableHead>
+                    <TableHead className="w-20">Código</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead className="text-right">Custo</TableHead>
+                    <TableHead className="text-right">Venda</TableHead>
+                    <TableHead className="text-right">Convenção</TableHead>
+                    <TableHead className="w-24">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        {p.imageUrl ? (
+                          <img src={p.imageUrl} alt={p.name} className="w-10 h-10 rounded object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                            <ImagePlus className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{p.code}</TableCell>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="text-right">R$ {Number(p.costPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right font-semibold">R$ {Number(p.salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right">R$ {Number(p.conventionPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </Card>
     </AdminLayout>
