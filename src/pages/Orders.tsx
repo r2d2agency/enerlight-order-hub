@@ -227,7 +227,7 @@ export default function Orders() {
                 {orders.map((o) => (
                   <TableRow key={o.id}>
                     <TableCell className="font-mono font-bold">#{o.number}</TableCell>
-                    <TableCell>{new Date(o.date + 'T12:00:00').toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>{(() => { const d = new Date(o.date); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); })()}</TableCell>
                     <TableCell className="font-medium">{o.client?.name || '-'}</TableCell>
                     <TableCell className="text-right font-semibold">R$ {Number(o.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>
