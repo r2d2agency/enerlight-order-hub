@@ -40,9 +40,24 @@ export default function Orders() {
   const generatePdfBlob = useCallback(async (): Promise<Blob | null> => {
     const el = document.getElementById('order-print');
     if (!el) return null;
+
+    // Force A4 desktop width for consistent PDF on mobile
+    const originalStyle = el.getAttribute('style') || '';
+    el.style.width = '794px';
+    el.style.minWidth = '794px';
+    el.style.maxWidth = '794px';
+    el.style.overflow = 'visible';
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    el.style.top = '0';
+
     const html2canvas = (await import('html2canvas-pro')).default;
     const { jsPDF } = await import('jspdf');
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 });
+
+    // Restore original style
+    el.setAttribute('style', originalStyle);
+
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
