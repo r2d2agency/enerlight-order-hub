@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus, Eye, Trash2, FileText, X, Download, Pencil, ChevronsUpDown, Check } from 'lucide-react';
+import { Plus, Eye, Trash2, FileText, X, Download, Pencil, ChevronsUpDown, Check, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Order, OrderItem, Product } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
@@ -415,11 +415,22 @@ export default function Orders() {
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="font-display">Proposta Comercial</DialogTitle>
+           <DialogTitle className="font-display">Proposta Comercial</DialogTitle>
             {viewing && (
-              <Button size="sm" onClick={() => handleDownloadPdf(viewing)} disabled={generatingPdf}>
-                <Download className="w-4 h-4 mr-2" /> {generatingPdf ? 'Gerando...' : 'Salvar PDF'}
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => {
+                  const phone = viewing.client?.phone?.replace(/\D/g, '') || '';
+                  const msg = encodeURIComponent(
+                    `Olá ${viewing.client?.name || ''}! Segue a proposta comercial Nº ${viewing.number} no valor de R$ ${Number(viewing.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Qualquer dúvida estou à disposição!`
+                  );
+                  window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
+                }}>
+                  <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
+                </Button>
+                <Button size="sm" onClick={() => handleDownloadPdf(viewing)} disabled={generatingPdf}>
+                  <Download className="w-4 h-4 mr-2" /> {generatingPdf ? 'Gerando...' : 'Salvar PDF'}
+                </Button>
+              </div>
             )}
           </DialogHeader>
           {viewing && <OrderPrint order={viewing} />}
