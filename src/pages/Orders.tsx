@@ -479,7 +479,14 @@ export default function Orders() {
                             <Select value={item.product?.id || item.productId} onValueChange={v => updateItem(item.id, 'productId', v)}>
                               <SelectTrigger className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
                               <SelectContent>
-                                {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name}</SelectItem>)}
+                                {products.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm">{p.code} - {p.name}</span>
+                                      <span className="text-xs text-muted-foreground">Custo: {Number(p.costPrice).toFixed(2).replace('.', ',')} · Venda: {Number(p.conventionPrice).toFixed(2).replace('.', ',')}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
