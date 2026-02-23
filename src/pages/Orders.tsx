@@ -205,8 +205,8 @@ export default function Orders() {
                   <TableRow key={o.id}>
                     <TableCell className="font-mono font-bold">#{o.number}</TableCell>
                     <TableCell>{new Date(o.date + 'T12:00:00').toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell className="font-medium">{o.client.name}</TableCell>
-                    <TableCell className="text-right font-semibold">R$ {o.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="font-medium">{o.client?.name || '-'}</TableCell>
+                    <TableCell className="text-right font-semibold">R$ {Number(o.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[o.status]}`}>{o.status}</span>
                     </TableCell>
@@ -294,12 +294,12 @@ export default function Orders() {
                       <TableRow key={item.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {item.product.imageUrl ? (
-                              <img src={item.product.imageUrl} alt={item.product.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                            {item.product?.imageUrl ? (
+                              <img src={item.product.imageUrl} alt={item.product?.name} className="w-8 h-8 rounded object-cover shrink-0" />
                             ) : (
                               <div className="w-8 h-8 rounded bg-muted shrink-0" />
                             )}
-                            <Select value={item.product.id} onValueChange={v => updateItem(item.id, 'productId', v)}>
+                            <Select value={item.product?.id || item.productId} onValueChange={v => updateItem(item.id, 'productId', v)}>
                               <SelectTrigger className="min-w-[160px]"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({Number(p.costPrice).toFixed(2).replace('.', ',')})</SelectItem>)}
@@ -317,7 +317,7 @@ export default function Orders() {
                           <Input type="number" step="0.01" value={item.discount} onChange={e => updateItem(item.id, 'discount', +e.target.value)} />
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          R$ {item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {Number(item.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
