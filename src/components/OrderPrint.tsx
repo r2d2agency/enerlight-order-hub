@@ -10,7 +10,8 @@ export default function OrderPrint({ order }: OrderPrintProps) {
   const { branding } = useBranding();
   const formatCurrency = (v: number | string) => Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const formatDate = (d: string) => {
-    const date = new Date(d + 'T12:00:00');
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
