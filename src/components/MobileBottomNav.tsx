@@ -98,7 +98,7 @@ export default function MobileBottomNav() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-bold text-primary text-sm">
-                      R$ {p.conventionPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {Number(p.conventionPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-xs text-muted-foreground">convenção</p>
                   </div>
