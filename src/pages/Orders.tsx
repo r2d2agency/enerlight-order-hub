@@ -369,55 +369,99 @@ export default function Orders() {
                 <Button variant="outline" size="sm" onClick={addItem}><Plus className="w-4 h-4 mr-1" /> Adicionar Item</Button>
               </div>
               {items.length > 0 && (
-                <div className="overflow-x-auto -mx-3 px-3">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produto</TableHead>
-                      <TableHead className="w-20">Qtd.</TableHead>
-                      <TableHead className="w-28">Preço Un.</TableHead>
-                      <TableHead className="w-28">Desc. Un.</TableHead>
-                      <TableHead className="w-28 text-right">Total</TableHead>
-                      <TableHead className="w-10"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <div className="space-y-3">
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto -mx-3 px-3">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead className="w-20">Qtd.</TableHead>
+                          <TableHead className="w-28">Preço Un.</TableHead>
+                          <TableHead className="w-28">Desc. Un.</TableHead>
+                          <TableHead className="w-28 text-right">Total</TableHead>
+                          <TableHead className="w-10"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {item.product?.imageUrl ? (
+                                  <img src={item.product.imageUrl} alt={item.product?.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-muted shrink-0" />
+                                )}
+                                <Select value={item.product?.id || item.productId} onValueChange={v => updateItem(item.id, 'productId', v)}>
+                                  <SelectTrigger className="min-w-[160px]"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({Number(p.costPrice).toFixed(2).replace('.', ',')})</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, 'quantity', +e.target.value)} />
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" step="0.01" value={item.unitPrice} onChange={e => updateItem(item.id, 'unitPrice', +e.target.value)} />
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" step="0.01" value={item.discount} onChange={e => updateItem(item.id, 'discount', +e.target.value)} />
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              R$ {Number(item.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile cards */}
+                  <div className="md:hidden space-y-3">
                     {items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {item.product?.imageUrl ? (
-                              <img src={item.product.imageUrl} alt={item.product?.name} className="w-8 h-8 rounded object-cover shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 rounded bg-muted shrink-0" />
-                            )}
+                      <div key={item.id} className="rounded-lg border border-border bg-card p-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                          {item.product?.imageUrl ? (
+                            <img src={item.product.imageUrl} alt={item.product?.name} className="w-10 h-10 rounded object-cover shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded bg-muted shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
                             <Select value={item.product?.id || item.productId} onValueChange={v => updateItem(item.id, 'productId', v)}>
-                              <SelectTrigger className="min-w-[160px]"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
                               <SelectContent>
-                                {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name} ({Number(p.costPrice).toFixed(2).replace('.', ',')})</SelectItem>)}
+                                {products.map(p => <SelectItem key={p.id} value={p.id}>{p.code} - {p.name}</SelectItem>)}
                               </SelectContent>
                             </Select>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, 'quantity', +e.target.value)} />
-                        </TableCell>
-                        <TableCell>
-                          <Input type="number" step="0.01" value={item.unitPrice} onChange={e => updateItem(item.id, 'unitPrice', +e.target.value)} />
-                        </TableCell>
-                        <TableCell>
-                          <Input type="number" step="0.01" value={item.discount} onChange={e => updateItem(item.id, 'discount', +e.target.value)} />
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          R$ {Number(item.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                        </TableCell>
-                      </TableRow>
+                          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => removeItem(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Qtd.</Label>
+                            <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, 'quantity', +e.target.value)} className="h-9" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Preço Un.</Label>
+                            <Input type="number" step="0.01" value={item.unitPrice} onChange={e => updateItem(item.id, 'unitPrice', +e.target.value)} className="h-9" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Desc. Un.</Label>
+                            <Input type="number" step="0.01" value={item.discount} onChange={e => updateItem(item.id, 'discount', +e.target.value)} className="h-9" />
+                          </div>
+                        </div>
+                        <div className="text-right font-semibold text-sm text-primary">
+                          Total: R$ {Number(item.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
                 </div>
               )}
             </div>
