@@ -262,36 +262,65 @@ export default function Orders() {
           {orders.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma proposta cadastrada. Clique em "Nova Proposta" para começar.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-24">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nº</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-24">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((o) => (
+                      <TableRow key={o.id}>
+                        <TableCell className="font-mono font-bold">#{o.number}</TableCell>
+                        <TableCell>{(() => { const d = new Date(o.date); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); })()}</TableCell>
+                        <TableCell className="font-medium">{o.client?.name || '-'}</TableCell>
+                        <TableCell className="text-right font-semibold">R$ {Number(o.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[o.status]}`}>{o.status}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => setViewing(o)}><Eye className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => openEditOrder(o)}><Pencil className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeletingOrder(o)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
                 {orders.map((o) => (
-                  <TableRow key={o.id}>
-                    <TableCell className="font-mono font-bold">#{o.number}</TableCell>
-                    <TableCell>{(() => { const d = new Date(o.date); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); })()}</TableCell>
-                    <TableCell className="font-medium">{o.client?.name || '-'}</TableCell>
-                    <TableCell className="text-right font-semibold">R$ {Number(o.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>
+                  <div key={o.id} className="rounded-lg border border-border bg-card p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-sm">#{o.number}</span>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[o.status]}`}>{o.status}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => setViewing(o)}><Eye className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditOrder(o)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeletingOrder(o)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    <p className="font-medium text-sm truncate">{o.client?.name || '-'}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {(() => { const d = new Date(o.date); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); })()}
+                      </span>
+                      <span className="font-semibold text-primary text-sm">R$ {Number(o.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex gap-1 pt-1 border-t border-border">
+                      <Button variant="ghost" size="sm" className="flex-1" onClick={() => setViewing(o)}><Eye className="w-4 h-4 mr-1" /> Ver</Button>
+                      <Button variant="ghost" size="sm" className="flex-1" onClick={() => openEditOrder(o)}><Pencil className="w-4 h-4 mr-1" /> Editar</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingOrder(o)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </Card>
       )}
@@ -360,6 +389,20 @@ export default function Orders() {
                 <Label>Prazo Entrega</Label>
                 <Input value={deliveryDeadline} onChange={e => setDeliveryDeadline(e.target.value)} />
               </div>
+              {editingOrder && (
+                <div>
+                  <Label>Status</Label>
+                  <Select value={editingOrder.status} onValueChange={(v: Order['status']) => setEditingOrder({ ...editingOrder, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rascunho">Rascunho</SelectItem>
+                      <SelectItem value="enviado">Enviado</SelectItem>
+                      <SelectItem value="aprovado">Aprovado</SelectItem>
+                      <SelectItem value="cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             {/* Items */}
