@@ -37,15 +37,26 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   const addOrder = async (order: Order) => {
-    const created = await orderService.create(order);
-    setOrders(prev => [created, ...prev]);
-    toast.success('Pedido salvo!');
+    try {
+      const result = await orderService.create(order);
+      // Use local order data (with client/items) but take id/number from API
+      const fullOrder = { ...order, id: result.id, number: result.number };
+      setOrders(prev => [fullOrder, ...prev]);
+      toast.success('Pedido salvo!');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao salvar pedido');
+    }
   };
 
   const updateOrder = async (id: string, order: Order) => {
-    const updated = await orderService.update(id, order);
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updated } : o));
-    toast.success('Pedido atualizado!');
+    try {
+      await orderService.update(id, order);
+      // Keep local order data (with client/items populated)
+      setOrders(prev => prev.map(o => o.id === id ? order : o));
+      toast.success('Pedido atualizado!');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao atualizar pedido');
+    }
   };
 
   const deleteOrder = (id: string) => {

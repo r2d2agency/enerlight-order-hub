@@ -31,8 +31,46 @@ export const clientService = {
 // Orders
 export const orderService = {
   list: () => api.get<Order[]>('/orders'),
-  create: (data: Omit<Order, 'id'>) => api.post<Order>('/orders', data),
-  update: (id: string, data: Partial<Order>) => api.put<Order>(`/orders/${id}`, data),
+  create: (data: Order) => {
+    const payload = {
+      date: data.date,
+      clientId: data.client?.id,
+      items: data.items.map(i => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice, discount: i.discount, total: i.total })),
+      subtotal: data.subtotal,
+      freight: data.freight,
+      taxSubstitution: data.taxSubstitution,
+      totalDiscount: data.totalDiscount,
+      total: data.total,
+      validityDays: data.validityDays,
+      paymentCondition: data.paymentCondition,
+      paymentMethod: data.paymentMethod,
+      deliveryDeadline: data.deliveryDeadline,
+      observations: data.observations,
+      seller: data.seller,
+      status: data.status,
+    };
+    return api.post<{ id: string; number: number }>('/orders', payload);
+  },
+  update: (id: string, data: Order) => {
+    const payload = {
+      date: data.date,
+      clientId: data.client?.id,
+      items: data.items.map(i => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice, discount: i.discount, total: i.total })),
+      subtotal: data.subtotal,
+      freight: data.freight,
+      taxSubstitution: data.taxSubstitution,
+      totalDiscount: data.totalDiscount,
+      total: data.total,
+      validityDays: data.validityDays,
+      paymentCondition: data.paymentCondition,
+      paymentMethod: data.paymentMethod,
+      deliveryDeadline: data.deliveryDeadline,
+      observations: data.observations,
+      seller: data.seller,
+      status: data.status,
+    };
+    return api.put<any>(`/orders/${id}`, payload);
+  },
 };
 
 // Users (admin)
