@@ -10,7 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Eye, Trash2, FileText, X, Download, Pencil } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus, Eye, Trash2, FileText, X, Download, Pencil, ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Order, OrderItem, Product } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
 import { useProducts } from '@/contexts/ProductsContext';
@@ -31,6 +34,7 @@ export default function Orders() {
   const [viewing, setViewing] = useState<Order | null>(null);
   const { toast } = useToast();
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
 
   const handleDownloadPdf = useCallback(async (order: Order) => {
     setGeneratingPdf(true);
@@ -258,12 +262,30 @@ export default function Orders() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="sm:col-span-2">
                 <Label>Cliente</Label>
-                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="w-full justify-between font-normal">
+                      {selectedClientId ? clients.find(c => c.id === selectedClientId)?.name : 'Selecione o cliente'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50 bg-popover" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar cliente..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {clients.map(c => (
+                            <CommandItem key={c.id} value={c.name} onSelect={() => { setSelectedClientId(c.id); setClientPopoverOpen(false); }}>
+                              <Check className={cn("mr-2 h-4 w-4", selectedClientId === c.id ? "opacity-100" : "opacity-0")} />
+                              {c.name} {c.cnpj ? `- ${c.cnpj}` : ''}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>Vendedor</Label>
