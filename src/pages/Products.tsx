@@ -256,9 +256,9 @@ export default function Products() {
                   </TableCell>
                   <TableCell className="font-mono text-sm">{p.code}</TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-right">R$ {p.costPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell className="text-right font-semibold">R$ {p.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell className="text-right">R$ {p.conventionPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right">R$ {Number(p.costPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right font-semibold">R$ {Number(p.salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right">R$ {Number(p.conventionPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
