@@ -65,7 +65,7 @@ export default function Dashboard() {
                   <p className="font-medium text-card-foreground text-sm">{product.name}</p>
                   <p className="text-xs text-muted-foreground">Cód: {product.code}</p>
                 </div>
-                <p className="font-semibold text-card-foreground">R$ {product.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="font-semibold text-card-foreground">R$ {Number(product.salePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
             ))}
           </div>
