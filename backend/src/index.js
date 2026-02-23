@@ -136,13 +136,13 @@ async function runMigrations() {
     `);
   }
 
-  // Create default admin
+  // Create or reset default admin password
   const bcryptLib = require('bcryptjs');
   const hash = await bcryptLib.hash('admin123', 10);
   await pool.query(`
     INSERT INTO users (name, email, password_hash, role)
     VALUES ('Admin Enerlight', 'admin@enerlight.com.br', $1, 'admin')
-    ON CONFLICT (email) DO NOTHING
+    ON CONFLICT (email) DO UPDATE SET password_hash = $1
   `, [hash]);
 
   console.log('✅ Migração automática concluída!');
