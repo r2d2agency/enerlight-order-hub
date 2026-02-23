@@ -8,7 +8,7 @@ interface OrderPrintProps {
 
 export default function OrderPrint({ order }: OrderPrintProps) {
   const { branding } = useBranding();
-  const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  const formatCurrency = (v: number | string) => Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const formatDate = (d: string) => {
     const date = new Date(d + 'T12:00:00');
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -75,7 +75,7 @@ export default function OrderPrint({ order }: OrderPrintProps) {
               <td className="py-2 font-mono text-xs">{item.product.code}</td>
               <td className="py-2">{item.product.name}</td>
               <td className="py-2 text-center">{item.product.unit}</td>
-              <td className="py-2 text-center">{item.quantity.toFixed(2).replace('.', ',')}</td>
+              <td className="py-2 text-center">{Number(item.quantity).toFixed(2).replace('.', ',')}</td>
               <td className="py-2 text-right">{formatCurrency(item.product.conventionPrice)}</td>
               <td className="py-2 text-right font-semibold">{formatCurrency(item.total)}</td>
             </tr>
