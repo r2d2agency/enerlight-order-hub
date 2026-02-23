@@ -57,6 +57,30 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'vendedor';
+  role: 'admin' | 'vendedor' | 'projetista';
   active: boolean;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  items: Array<{ productId: string; quantity: number; notes?: string }>;
+  createdAt?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  clientId?: string;
+  clientName?: string;
+  clientCnpj?: string;
+  templateId?: string;
+  templateName?: string;
+  items: Array<{ productId: string; quantity: number; notes?: string }>;
+  notes: string;
+  status: 'rascunho' | 'em_andamento' | 'concluido' | 'cancelado';
+  createdBy?: string;
+  creatorName?: string;
+  createdAt?: string;
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, FileText, Users, Settings, Palette, Zap, LogOut, Menu, X, FolderKanban } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/produtos', icon: Package, label: 'Produtos' },
   { to: '/pedidos', icon: FileText, label: 'Pedidos' },
+  { to: '/projetos', icon: FolderKanban, label: 'Projetos' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/usuarios', icon: Settings, label: 'Usuários' },
   { to: '/configuracoes', icon: Palette, label: 'Configurações' },

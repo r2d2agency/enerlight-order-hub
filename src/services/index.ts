@@ -1,5 +1,5 @@
 import { api } from './api';
-import { Product, Client, Order, User } from '@/types';
+import { Product, Client, Order, User, Project, ProjectTemplate } from '@/types';
 
 // Auth
 export const authService = {
@@ -79,4 +79,20 @@ export const userService = {
   create: (data: Omit<User, 'id'> & { password: string }) => api.post<User>('/users', data),
   update: (id: string, data: Partial<User>) => api.put<User>(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
+};
+
+// Templates
+export const templateService = {
+  list: () => api.get<ProjectTemplate[]>('/projects/templates'),
+  create: (data: Omit<ProjectTemplate, 'id'>) => api.post<ProjectTemplate>('/projects/templates', data),
+  update: (id: string, data: Partial<ProjectTemplate>) => api.put<any>(`/projects/templates/${id}`, data),
+  delete: (id: string) => api.delete(`/projects/templates/${id}`),
+};
+
+// Projects
+export const projectService = {
+  list: () => api.get<Project[]>('/projects'),
+  create: (data: Partial<Project>) => api.post<Project>('/projects', data),
+  update: (id: string, data: Partial<Project>) => api.put<any>(`/projects/${id}`, data),
+  delete: (id: string) => api.delete(`/projects/${id}`),
 };

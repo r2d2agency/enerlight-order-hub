@@ -9,6 +9,7 @@ const clientRoutes = require('./routes/clients');
 const orderRoutes = require('./routes/orders');
 const userRoutes = require('./routes/users');
 const uploadRoutes = require('./routes/uploads');
+const projectRoutes = require('./routes/projects');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,6 +35,7 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -62,7 +64,7 @@ async function runMigrations() {
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(20) NOT NULL DEFAULT 'vendedor' CHECK (role IN ('admin', 'vendedor')),
+        role VARCHAR(20) NOT NULL DEFAULT 'vendedor' CHECK (role IN ('admin', 'vendedor', 'projetista')),
         active BOOLEAN NOT NULL DEFAULT true,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
@@ -135,6 +137,34 @@ async function runMigrations() {
       INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
       CREATE SEQUENCE IF NOT EXISTS order_number_seq START WITH 9200;
       ALTER TABLE orders ALTER COLUMN number SET DEFAULT nextval('order_number_seq');
+
+      -- Update role constraint to include projetista
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'vendedor', 'projetista'));
+
+      -- Project templates table
+      CREATE TABLE IF NOT EXISTS project_templates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        description TEXT DEFAULT '',
+        items JSONB DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+
+      -- Projects table
+      CREATE TABLE IF NOT EXISTS projects (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL,
+        client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+        template_id UUID REFERENCES project_templates(id) ON DELETE SET NULL,
+        items JSONB DEFAULT '[]',
+        notes TEXT DEFAULT '',
+        status VARCHAR(20) DEFAULT 'rascunho' CHECK (status IN ('rascunho', 'em_andamento', 'concluido', 'cancelado')),
+        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
     `);
   }
 

@@ -13,6 +13,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Orders from "./pages/Orders";
+import Projects from "./pages/Projects";
 import Clients from "./pages/Clients";
 import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/produtos" element={<ProtectedRoute><Products /></ProtectedRoute>} />
                 <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                <Route path="/projetos" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
                 <Route path="/clientes" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
                 <Route path="/usuarios" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
                 <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

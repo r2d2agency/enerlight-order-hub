@@ -14,14 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 export default function UsersPage() {
   const { users, addUser, updateUser, deleteUser } = useUsers();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; name: string; email: string; role: 'admin' | 'vendedor'; active: boolean } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string; email: string; role: 'admin' | 'vendedor' | 'projetista'; active: boolean } | null>(null);
   const { toast } = useToast();
 
-  const emptyForm: { name: string; email: string; role: 'admin' | 'vendedor'; active: boolean; password: string } = { name: '', email: '', role: 'vendedor', active: true, password: '' };
+  const emptyForm: { name: string; email: string; role: 'admin' | 'vendedor' | 'projetista'; active: boolean; password: string } = { name: '', email: '', role: 'vendedor', active: true, password: '' };
   const [form, setForm] = useState(emptyForm);
 
   const openNew = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
-  const openEdit = (u: { id: string; name: string; email: string; role: 'admin' | 'vendedor'; active: boolean }) => {
+  const openEdit = (u: { id: string; name: string; email: string; role: 'admin' | 'vendedor' | 'projetista'; active: boolean }) => {
     setEditing(u);
     setForm({ ...u, password: '' });
     setDialogOpen(true);
@@ -81,11 +81,12 @@ export default function UsersPage() {
               </div>
               <div>
                 <Label>Perfil</Label>
-                <Select value={form.role} onValueChange={(v: 'admin' | 'vendedor') => setForm({ ...form, role: v })}>
+                <Select value={form.role} onValueChange={(v: 'admin' | 'vendedor' | 'projetista') => setForm({ ...form, role: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
                     <SelectItem value="vendedor">Vendedor</SelectItem>
+                    <SelectItem value="projetista">Projetista</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -118,8 +119,8 @@ export default function UsersPage() {
                   <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${u.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                      {u.role === 'admin' ? 'Admin' : 'Vendedor'}
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${u.role === 'admin' ? 'bg-primary/10 text-primary' : u.role === 'projetista' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'}`}>
+                      {u.role === 'admin' ? 'Admin' : u.role === 'projetista' ? 'Projetista' : 'Vendedor'}
                     </span>
                   </TableCell>
                   <TableCell>
