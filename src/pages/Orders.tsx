@@ -34,29 +34,75 @@ export default function Orders() {
   const [viewing, setViewing] = useState<Order | null>(null);
   const { toast } = useToast();
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+
+  const generatePdfBlob = useCallback(async (): Promise<Blob | null> => {
+    const el = document.getElementById('order-print');
+    if (!el) return null;
+    const html2canvas = (await import('html2canvas-pro')).default;
+    const { jsPDF } = await import('jspdf');
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    return pdf.output('blob');
+  }, []);
 
   const handleDownloadPdf = useCallback(async (order: Order) => {
     setGeneratingPdf(true);
     try {
-      const el = document.getElementById('order-print');
-      if (!el) return;
-      const html2canvas = (await import('html2canvas-pro')).default;
-      const { jsPDF } = await import('jspdf');
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`proposta-${order.number}.pdf`);
+      const blob = await generatePdfBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `proposta-${order.number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
       toast({ title: 'PDF gerado com sucesso!' });
     } catch {
       toast({ title: 'Erro ao gerar PDF', variant: 'destructive' });
     } finally {
       setGeneratingPdf(false);
     }
-  }, [toast]);
+  }, [generatePdfBlob, toast]);
+
+  const handleWhatsappWithPdf = useCallback(async (order: Order) => {
+    setSendingWhatsapp(true);
+    try {
+      const blob = await generatePdfBlob();
+      if (!blob) throw new Error('Erro ao gerar PDF');
+
+      const formData = new FormData();
+      formData.append('pdf', blob, `proposta-${order.number}.pdf`);
+
+      const token = localStorage.getItem('enerlight-token');
+      const API_URL = import.meta.env.VITE_API_URL || 'https://whats-agente-order-enerlight-backend.isyhhh.easypanel.host/api';
+      const res = await fetch(`${API_URL}/uploads/pdf`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Erro ao enviar PDF');
+      const { url: pdfPath } = await res.json();
+
+      const baseUrl = API_URL.replace('/api', '');
+      const pdfUrl = `${baseUrl}${pdfPath}`;
+      const phone = order.client?.phone?.replace(/\D/g, '') || '';
+      const msg = encodeURIComponent(
+        `Olá ${order.client?.name || ''}! Segue a proposta comercial Nº ${order.number} no valor de R$ ${Number(order.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.\n\n📄 Proposta: ${pdfUrl}\n\nQualquer dúvida estou à disposição!`
+      );
+      window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
+      toast({ title: 'WhatsApp aberto com link do PDF!' });
+    } catch {
+      toast({ title: 'Erro ao enviar para WhatsApp', variant: 'destructive' });
+    } finally {
+      setSendingWhatsapp(false);
+    }
+  }, [generatePdfBlob, toast]);
 
   const sellers = users.filter(u => u.role === 'vendedor' && u.active);
 
@@ -418,14 +464,8 @@ export default function Orders() {
            <DialogTitle className="font-display">Proposta Comercial</DialogTitle>
             {viewing && (
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => {
-                  const phone = viewing.client?.phone?.replace(/\D/g, '') || '';
-                  const msg = encodeURIComponent(
-                    `Olá ${viewing.client?.name || ''}! Segue a proposta comercial Nº ${viewing.number} no valor de R$ ${Number(viewing.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Qualquer dúvida estou à disposição!`
-                  );
-                  window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
-                }}>
-                  <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
+                <Button size="sm" variant="outline" onClick={() => handleWhatsappWithPdf(viewing)} disabled={sendingWhatsapp}>
+                  <MessageCircle className="w-4 h-4 mr-2" /> {sendingWhatsapp ? 'Enviando...' : 'WhatsApp + PDF'}
                 </Button>
                 <Button size="sm" onClick={() => handleDownloadPdf(viewing)} disabled={generatingPdf}>
                   <Download className="w-4 h-4 mr-2" /> {generatingPdf ? 'Gerando...' : 'Salvar PDF'}
