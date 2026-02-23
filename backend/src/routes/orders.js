@@ -135,19 +135,55 @@ router.post('/', async (req, res) => {
 
 // PUT /api/orders/:id
 router.put('/:id', async (req, res) => {
+  const dbClient = await pool.connect();
   try {
+    await dbClient.query('BEGIN');
     const { id } = req.params;
-    const { status, observations } = req.body;
-    const result = await pool.query(
-      `UPDATE orders SET status=COALESCE($1,status), observations=COALESCE($2,observations), updated_at=NOW()
-       WHERE id=$3 RETURNING *`,
-      [status, observations, id]
+    const {
+      date, clientId, items, subtotal, freight, taxSubstitution,
+      totalDiscount, total, validityDays, paymentCondition,
+      paymentMethod, deliveryDeadline, observations, seller, status
+    } = req.body;
+
+    const result = await dbClient.query(
+      `UPDATE orders SET date=COALESCE($1,date), client_id=COALESCE($2,client_id),
+       subtotal=COALESCE($3,subtotal), freight=COALESCE($4,freight),
+       tax_substitution=COALESCE($5,tax_substitution), total_discount=COALESCE($6,total_discount),
+       total=COALESCE($7,total), validity_days=COALESCE($8,validity_days),
+       payment_condition=COALESCE($9,payment_condition), payment_method=COALESCE($10,payment_method),
+       delivery_deadline=COALESCE($11,delivery_deadline), observations=COALESCE($12,observations),
+       seller=COALESCE($13,seller), status=COALESCE($14,status), updated_at=NOW()
+       WHERE id=$15 RETURNING *`,
+      [date, clientId, subtotal, freight, taxSubstitution, totalDiscount, total,
+       validityDays, paymentCondition, paymentMethod, deliveryDeadline, observations,
+       seller, status, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Pedido não encontrado' });
+
+    if (result.rows.length === 0) {
+      await dbClient.query('ROLLBACK');
+      return res.status(404).json({ message: 'Pedido não encontrado' });
+    }
+
+    // Replace items if provided
+    if (items && items.length > 0) {
+      await dbClient.query('DELETE FROM order_items WHERE order_id = $1', [id]);
+      for (const item of items) {
+        await dbClient.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, unit_price, discount, total)
+           VALUES ($1,$2,$3,$4,$5,$6)`,
+          [id, item.productId, item.quantity, item.unitPrice, item.discount || 0, item.total]
+        );
+      }
+    }
+
+    await dbClient.query('COMMIT');
     res.json(result.rows[0]);
   } catch (err) {
+    await dbClient.query('ROLLBACK');
     console.error('Erro ao atualizar pedido:', err);
     res.status(500).json({ message: 'Erro interno' });
+  } finally {
+    dbClient.release();
   }
 });
 
