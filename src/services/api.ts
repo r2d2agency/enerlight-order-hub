@@ -18,10 +18,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (res.status === 401 && !path.startsWith('/auth/login')) {
-    localStorage.removeItem('enerlight-token');
-    localStorage.removeItem('enerlight-user');
-    // Let React (ProtectedRoute/AuthContext) handle redirect naturally
-    throw new Error('Sessão expirada');
+    // Don't clear auth state — let contexts handle gracefully with local fallback
+    const error = await res.json().catch(() => ({ message: 'Sessão expirada' }));
+    throw new Error(error.message || 'Sessão expirada');
   }
 
   if (!res.ok) {
