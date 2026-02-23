@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 interface OrdersContextType {
   orders: Order[];
   addOrder: (order: Order) => void;
+  updateOrder: (id: string, order: Order) => void;
   deleteOrder: (id: string) => void;
   loading: boolean;
 }
@@ -14,6 +15,7 @@ interface OrdersContextType {
 const OrdersContext = createContext<OrdersContextType>({
   orders: [],
   addOrder: () => {},
+  updateOrder: () => {},
   deleteOrder: () => {},
   loading: true,
 });
@@ -40,12 +42,18 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     toast.success('Pedido salvo!');
   };
 
+  const updateOrder = async (id: string, order: Order) => {
+    const updated = await orderService.update(id, order);
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updated } : o));
+    toast.success('Pedido atualizado!');
+  };
+
   const deleteOrder = (id: string) => {
     setOrders(prev => prev.filter(o => o.id !== id));
   };
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, deleteOrder, loading }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrder, deleteOrder, loading }}>
       {children}
     </OrdersContext.Provider>
   );

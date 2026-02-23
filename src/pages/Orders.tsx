@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Eye, Trash2, FileText, X, Download } from 'lucide-react';
+import { Plus, Eye, Trash2, FileText, X, Download, Pencil } from 'lucide-react';
 import { Order, OrderItem, Product } from '@/types';
 import { useClients } from '@/contexts/ClientsContext';
 import { useProducts } from '@/contexts/ProductsContext';
@@ -21,7 +21,8 @@ import OrderPrint from '@/components/OrderPrint';
 
 export default function Orders() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { orders, addOrder, deleteOrder } = useOrders();
+  const { orders, addOrder, updateOrder, deleteOrder } = useOrders();
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
   const { clients } = useClients();
   const { products } = useProducts();
@@ -109,16 +110,16 @@ export default function Orders() {
 
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
-  const handleCreateOrder = () => {
+  const handleSaveOrder = () => {
     const client = clients.find(c => c.id === selectedClientId);
     if (!client || items.length === 0) {
       toast({ title: 'Erro', description: 'Selecione um cliente e adicione pelo menos um item.', variant: 'destructive' });
       return;
     }
-    const newOrder: Order = {
-      id: crypto.randomUUID(),
-      number: Math.max(...orders.map(o => o.number), 9000) + 1,
-      date: new Date().toISOString().split('T')[0],
+    const orderData: Order = {
+      id: editingOrder?.id || crypto.randomUUID(),
+      number: editingOrder?.number || Math.max(...orders.map(o => o.number), 9000) + 1,
+      date: editingOrder?.date || new Date().toISOString().split('T')[0],
       client,
       items,
       subtotal,
@@ -132,16 +133,23 @@ export default function Orders() {
       deliveryDeadline,
       observations: obs,
       seller,
-      status: 'rascunho',
+      status: editingOrder?.status || 'rascunho',
     };
-    addOrder(newOrder);
+    if (editingOrder) {
+      updateOrder(editingOrder.id, orderData);
+      toast({ title: `Proposta #${orderData.number} atualizada!` });
+    } else {
+      addOrder(orderData);
+      toast({ title: `Proposta #${orderData.number} criada!` });
+    }
     setCreating(false);
+    setEditingOrder(null);
     setItems([]);
     setSelectedClientId('');
-    toast({ title: `Proposta #${newOrder.number} criada!` });
   };
 
   const resetForm = () => {
+    setEditingOrder(null);
     setCreating(true);
     setItems([]);
     setSelectedClientId('');
@@ -153,6 +161,21 @@ export default function Orders() {
     setValidityDays(7);
     setDeliveryDeadline('');
     setSeller('');
+  };
+
+  const openEditOrder = (order: Order) => {
+    setEditingOrder(order);
+    setCreating(true);
+    setSelectedClientId(order.client?.id || '');
+    setItems(order.items.map(item => ({ ...item })));
+    setFreight(Number(order.freight) || 0);
+    setTaxSub(Number(order.taxSubstitution) || 0);
+    setObs(order.observations || '');
+    setPayCondition(order.paymentCondition || 'A VISTA');
+    setPayMethod(order.paymentMethod || 'DEPOSITO');
+    setValidityDays(order.validityDays || 7);
+    setDeliveryDeadline(order.deliveryDeadline || '');
+    setSeller(order.seller || '');
   };
 
   // Auto-open order form when coming from clients page
@@ -212,6 +235,7 @@ export default function Orders() {
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => setViewing(o)}><Eye className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEditOrder(o)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => setDeletingOrder(o)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </TableCell>
                   </TableRow>
@@ -227,8 +251,8 @@ export default function Orders() {
         <div className="space-y-6">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display font-semibold text-lg">Nova Proposta Comercial</h3>
-              <Button variant="ghost" size="icon" onClick={() => setCreating(false)}><X className="w-5 h-5" /></Button>
+              <h3 className="font-display font-semibold text-lg">{editingOrder ? `Editar Proposta #${editingOrder.number}` : 'Nova Proposta Comercial'}</h3>
+              <Button variant="ghost" size="icon" onClick={() => { setCreating(false); setEditingOrder(null); }}><X className="w-5 h-5" /></Button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -358,8 +382,8 @@ export default function Orders() {
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setCreating(false)}>Cancelar</Button>
-              <Button onClick={handleCreateOrder}><FileText className="w-4 h-4 mr-2" /> Gerar Proposta</Button>
+              <Button variant="outline" onClick={() => { setCreating(false); setEditingOrder(null); }}>Cancelar</Button>
+              <Button onClick={handleSaveOrder}><FileText className="w-4 h-4 mr-2" /> {editingOrder ? 'Salvar Alterações' : 'Gerar Proposta'}</Button>
             </div>
           </Card>
         </div>
