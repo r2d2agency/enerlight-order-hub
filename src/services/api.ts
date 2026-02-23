@@ -17,7 +17,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers,
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !path.startsWith('/auth/login')) {
     localStorage.removeItem('enerlight-token');
     localStorage.removeItem('enerlight-user');
     window.location.href = '/login';
