@@ -20,7 +20,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (res.status === 401 && !path.startsWith('/auth/login')) {
     localStorage.removeItem('enerlight-token');
     localStorage.removeItem('enerlight-user');
-    window.location.href = '/login';
+    // Let React (ProtectedRoute/AuthContext) handle redirect naturally
     throw new Error('Sessão expirada');
   }
 
