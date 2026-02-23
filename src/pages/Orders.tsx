@@ -468,30 +468,29 @@ export default function Orders() {
                   {/* Mobile cards */}
                   <div className="md:hidden space-y-3">
                     {items.map((item) => (
-                      <div key={item.id} className="rounded-lg border border-border bg-card p-3 space-y-3">
-                        <div className="flex items-center gap-2">
-                          {item.product?.imageUrl ? (
-                            <img src={item.product.imageUrl} alt={item.product?.name} className="w-10 h-10 rounded object-cover shrink-0" />
-                          ) : (
-                            <div className="w-10 h-10 rounded bg-muted shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <Select value={item.product?.id || item.productId} onValueChange={v => updateItem(item.id, 'productId', v)}>
-                              <SelectTrigger className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                              <SelectContent>
-                                {products.map(p => (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    <div className="flex flex-col">
-                                      <span className="text-sm">{p.code} - {p.name}</span>
-                                      <span className="text-xs text-muted-foreground">Custo: {Number(p.costPrice).toFixed(2).replace('.', ',')} · Venda: {Number(p.conventionPrice).toFixed(2).replace('.', ',')}</span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                      <div key={item.id} className="rounded-lg border border-border bg-card p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {item.product?.imageUrl ? (
+                              <img src={item.product.imageUrl} alt={item.product?.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-muted shrink-0" />
+                            )}
+                            <span className="text-sm font-medium truncate">{item.product?.name || 'Selecione'}</span>
                           </div>
-                          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => removeItem(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => removeItem(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </div>
+                        <Select value={item.product?.id || item.productId} onValueChange={v => updateItem(item.id, 'productId', v)}>
+                          <SelectTrigger className="w-full h-9 text-xs"><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
+                          <SelectContent>
+                            {products.map(p => (
+                              <SelectItem key={p.id} value={p.id}>
+                                <span className="text-sm">{p.code} - {p.name}</span>
+                                <span className="text-xs text-muted-foreground ml-1">C:{Number(p.costPrice).toFixed(2).replace('.', ',')} V:{Number(p.conventionPrice).toFixed(2).replace('.', ',')}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <div className="grid grid-cols-3 gap-2">
                           <div>
                             <Label className="text-xs text-muted-foreground">Qtd.</Label>
